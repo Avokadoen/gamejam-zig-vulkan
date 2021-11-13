@@ -69,7 +69,7 @@ pub fn init(
     cursor_pos_handle_fn = input_cursor_pos_handle_fn;
     try cursor_pos_stream.new_input_event.init();
 
-    try window.setInputMode(glfw.Window.InputMode.cursor, glfw.Window.InputModeCursor.disabled);
+    try window.setInputMode(glfw.Window.InputMode.cursor, glfw.Window.InputModeCursor.normal);
 
     _ = window.setKeyCallback(keyCallback); 
     _ = window.setMouseButtonCallback(mouseBtnCallback);

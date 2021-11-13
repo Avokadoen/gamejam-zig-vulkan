@@ -6,8 +6,8 @@ const zlm = @import("zlm");
 const render2d = @import("../render2d/render2d.zig");
 const Sprite = render2d.Sprite;
 
-pub const Anim = @import("anim.zig");
-pub const Move = @import("move.zig");
+pub const Anim = @import("Anim.zig");
+pub const Move = @import("Move.zig");
 
 const Self = @This();
 

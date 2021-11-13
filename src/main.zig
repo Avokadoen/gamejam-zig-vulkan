@@ -15,13 +15,21 @@ const render2d = @import("render2d/render2d.zig");
 
 const game = @import("game/game.zig");
 const Anim = game.Anim;
+const Button = game.Button;
 const Move = game.Move;
 const Unit = game.Unit;
+
 pub const application_name = "zig vulkan";
 
 // TODO: wrap this in render to make main seem simpler :^)
 var window: glfw.Window = undefined;
+var window_width: f32 = undefined;
+var window_height: f32 = undefined;
+
 var delta_time: f64 = 0;
+
+var buttons: ArrayList(Button) = undefined;
+var hover_button: ?Button = null;
 
 pub fn main() anyerror!void {
     const stderr = std.io.getStdErr().writer();
@@ -37,7 +45,7 @@ pub fn main() anyerror!void {
     }
     const allocator = if (consts.enable_validation_layers) &alloc.allocator else alloc;
 
-
+    buttons = ArrayList(Button).init(allocator);
     
     // Initialize the library *
     try glfw.init();
@@ -70,8 +78,8 @@ pub fn main() anyerror!void {
     try input.init(window, keyInputFn, mouseBtnInputFn, cursorPosInputFn);
     defer input.deinit();
 
-    var texture_handles: [6]render2d.TextureHandle = undefined;
-    var sprites: [4]render2d.Sprite = undefined; 
+    var texture_handles: [8]render2d.TextureHandle = undefined;
+    var sprites: [5]render2d.Sprite = undefined; 
 
 
     var castle_anim: Anim = undefined;
@@ -79,7 +87,6 @@ pub fn main() anyerror!void {
 
     var unit_move: Move = undefined;
     var unit_swordman: Unit = undefined;
-    
 
     var draw_api = blk: {
         var init_api = try render2d.init(allocator, ctx, 25);
@@ -93,9 +100,12 @@ pub fn main() anyerror!void {
         texture_handles[4] = try init_api.loadTexture("../assets/images/structures/castle0000.png"[0..]);
         texture_handles[5] = try init_api.loadTexture("../assets/images/structures/castle0001.png"[0..]);
 
+        texture_handles[6] = try init_api.loadTexture("../assets/images/gui/test_btn_idle.png"[0..]);
+        texture_handles[7] = try init_api.loadTexture("../assets/images/gui/test_btn_clicked.png"[0..]);
+
         const window_size = try window.getSize();
-        const window_width = @intToFloat(f32, window_size.width);
-        const window_height = @intToFloat(f32, window_size.height);
+        window_width = @intToFloat(f32, window_size.width);
+        window_height = @intToFloat(f32, window_size.height);
      
         // create map background sprite
         sprites[0] = try init_api.createSprite(
@@ -148,6 +158,18 @@ pub fn main() anyerror!void {
             unit_move
         );
         unit_swordman.setState(.attacking);
+
+        sprites[4] = try init_api.createSprite(
+            texture_handles[6], 
+            zlm.Vec2.new(0, 0), 
+            0, 
+            zlm.Vec2.new(
+                texture_handles[4].width * 4, 
+                texture_handles[4].height * 4
+            )
+        );
+        try buttons.append(Button.init(&sprites[4], texture_handles[6], texture_handles[7], btnCallback));
+
         break :blk try init_api.initDrawApi(.{ .every_ms = 14 });
     };
     defer unit_swordman.deinit();
@@ -173,6 +195,10 @@ pub fn main() anyerror!void {
     }
 }
 
+fn btnCallback() void {
+    std.debug.print("hello from button!\n", .{});
+}
+
 fn keyInputFn(event: input.KeyEvent) void {
     if (event.action == .press) {
         switch(event.key) {
@@ -187,11 +213,41 @@ fn keyInputFn(event: input.KeyEvent) void {
 }
 
 fn mouseBtnInputFn(event: input.MouseButtonEvent) void {
-    _ = event;
+    if (event.button == .left) {
+        if (hover_button) |*some| {
+            if (event.action == .press) {
+                some.onClick();
+            } else if (event.action == .release) {
+                some.onRelease();
+            }
+        }
+    }
 }
+
 fn cursorPosInputFn(event: input.CursorPosEvent) void {
-    _ = event;
-    // std.debug.print("cursor pos: {s} {d}, {d} {s}\n", .{"{", event.x, event.y, "}"});
+    const vec_event = zlm.Vec2.new(
+        @floatCast(f32, event.x) - window_width * 0.5, 
+        @floatCast(f32, event.y) - window_height * 0.5
+    );
+
+    var prev_button = hover_button;
+    hover_button = null;
+
+    for (buttons.items) |button| {
+        if (button.bound.contains(vec_event)) {
+            hover_button = button;
+            break;
+        }
+    }
+
+    if (prev_button) |prev_some| {
+        if (hover_button) |new_some| {
+            if(prev_some.sprite.db_id.value == new_some.sprite.db_id.value) {
+                return;
+            }
+        }
+        prev_some.onRelease();
+    }
 }
 
 // TODO: move to internal of pipeline
