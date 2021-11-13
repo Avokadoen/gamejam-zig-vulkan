@@ -9,4 +9,4 @@
 	url = https://github.com/ziglibs/zlm.git
 [submodule "deps/mach-glfw"]
 	path = deps/mach-glfw
-	url = git@github.com:hexops/mach-glfw.git
+	url = https://github.com/hexops/mach-glfw.git
