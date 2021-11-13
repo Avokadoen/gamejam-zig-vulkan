@@ -15,7 +15,7 @@ const render2d = @import("render2d/render2d.zig");
 
 const game = @import("game/game.zig");
 const Anim = game.Anim;
-
+const Move = game.Move;
 pub const application_name = "zig vulkan";
 
 // TODO: wrap this in render to make main seem simpler :^)
@@ -70,10 +70,13 @@ pub fn main() anyerror!void {
     defer input.deinit();
 
     var texture_handles: [6]render2d.TextureHandle = undefined;
-    var sprites: [3]render2d.Sprite = undefined; 
+    var sprites: [4]render2d.Sprite = undefined; 
+
 
     var castle_anim: Anim = undefined;
     defer castle_anim.deinit();
+
+    var unit_move: Move = undefined;
 
     var draw_api = blk: {
         var init_api = try render2d.init(allocator, ctx, 25);
@@ -122,9 +125,18 @@ pub fn main() anyerror!void {
             )
         );
 
-        // sprites[1] = try init_api.createSprite(texture_handles[1], zlm.Vec2.new(-100, 0), 0, zlm.Vec2.new(windowf, windowf));
-        // sprites[2] = try init_api.createSprite(texture_handles[2], zlm.Vec2.new(100, 0), 0, zlm.Vec2.new(windowf, windowf));
-  
+        sprites[3] = try init_api.createSprite(
+            texture_handles[0], 
+            zlm.Vec2.new(-200, 0), 
+            0, 
+            zlm.Vec2.new(
+                texture_handles[4].width * 4, 
+                texture_handles[4].height * 4
+            )
+        );
+
+        unit_move = Move.init(&sprites[3], zlm.Vec2.new( 400, 200), zlm.Vec2.new(-400, -200), 100);
+
         break :blk try init_api.initDrawApi(.{ .every_ms = 14 });
     };
     defer draw_api.deinit();
@@ -138,6 +150,7 @@ pub fn main() anyerror!void {
         const dt = @floatCast(f32, delta_time);
         
         castle_anim.tick(dt);
+        unit_move.tick(dt);
 
         // Render here
         try draw_api.draw();
