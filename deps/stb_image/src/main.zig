@@ -35,10 +35,6 @@ pub const Image = struct {
         if (char_ptr == null) {
             return error.FailedToLoadImage; // Only error scenario here is failed to open file descriptor
         }
-        // TODO: account for any channel type
-        if (channels != 3) {
-            std.debug.panic("got image with unimplemented channel count: {d}", .{channels});
-        }
 
         const char_slice = std.mem.span(char_ptr);
         const aligned_char_ptr = std.mem.alignPointer(char_slice.ptr, 8);

@@ -84,7 +84,12 @@ pub const InitializedApi = struct {
         const image = try stbi.Image.from_file(self.allocator, path, stbi.DesiredChannels.STBI_rgb_alpha);
         try self.images.append(image);
 
-        const handle: TextureHandle = @intCast(c_int, self.images.items.len - 1);
+        const handle = TextureHandle{
+            .id = @intCast(c_int, self.images.items.len - 1),
+            .width = @intCast(u32, image.width),
+            .height = @intCast(u32, image.height),
+        };
+
         try self.image_paths.put(path, handle);
         return handle;
     }
@@ -107,7 +112,7 @@ pub const InitializedApi = struct {
         try self.db_ptr.*.positions.updateAt(index, position);
         try self.db_ptr.*.scales.updateAt(index, size);
         try self.db_ptr.*.rotations.updateAt(index, zlm.toRadians(rotation));
-        try self.db_ptr.*.uv_indices.updateAt(index, texture);
+        try self.db_ptr.*.uv_indices.updateAt(index, texture.id);
 
         return new_sprite;
     }
@@ -181,7 +186,7 @@ pub const InitializedApi = struct {
         const mega_image = stbi.Image{
             .width = @intCast(i32, mega_size.width),
             .height = @intCast(i32, mega_size.height),
-            .channels = 3,
+            .channels = 4,
             .data = mega_data,
         };
         

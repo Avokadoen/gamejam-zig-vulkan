@@ -1,6 +1,10 @@
 const zlm = @import("zlm");
 
-pub const TextureHandle = c_int;
+pub const TextureHandle = struct {
+    id: c_int,
+    width: u32,
+    height: u32,
+};
 
 pub const UV = struct {
     min: zlm.Vec2,
