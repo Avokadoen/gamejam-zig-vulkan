@@ -17,6 +17,7 @@ const game = @import("game/game.zig");
 const Anim = game.Anim;
 const Move = game.Move;
 const Unit = game.Unit;
+const Castle = game.Castle;
 pub const application_name = "zig vulkan";
 
 // TODO: wrap this in render to make main seem simpler :^)
@@ -79,6 +80,9 @@ pub fn main() anyerror!void {
 
     var unit_move: Move = undefined;
     var unit_swordman: Unit = undefined;
+
+    var unit_player_castle: Castle = undefined;
+    var unit_enemy_castle: Castle = undefined;
     
 
     var draw_api = blk: {
@@ -143,13 +147,36 @@ pub fn main() anyerror!void {
         unit_swordman = try Unit.init(
             allocator, 
             &sprites[3], 
-            100, 10, 100, 50, 2, 
+            100, 10, 100, 50, 0.5, 
             [2][]const render2d.TextureHandle{&anim_move, &anim_attack}, 
             unit_move
         );
         unit_swordman.setState(.attacking);
+
+        const caste_anim_idle = [_]render2d.TextureHandle{texture_handles[4]};
+        const caste_anim_attack = [_]render2d.TextureHandle{texture_handles[5]};
+
+        unit_player_castle = try Castle.init(
+            allocator,
+            &sprites[1],
+            2000, 300, 200, 1.5,
+            [2][]const render2d.TextureHandle{&caste_anim_idle, &caste_anim_attack}
+        );
+
+        unit_enemy_castle = try Castle.init(
+            allocator,
+            &sprites[2],
+            2000, 300, 200, 1.5,
+            [2][]const render2d.TextureHandle{&caste_anim_idle, &caste_anim_attack}
+        );
+
+        unit_enemy_castle.setState(.spawning);
+
+
         break :blk try init_api.initDrawApi(.{ .every_ms = 14 });
     };
+    defer unit_enemy_castle.deinit();
+    defer unit_player_castle.deinit();
     defer unit_swordman.deinit();
     defer draw_api.deinit();
 
@@ -161,7 +188,10 @@ pub fn main() anyerror!void {
         // f32 variant of delta_time
         const dt = @floatCast(f32, delta_time);
         
-        castle_anim.tick(dt);
+        //castle_anim.tick(dt);
+
+        unit_player_castle.tick(dt);
+        unit_enemy_castle.tick(dt);
         unit_swordman.tick(dt);
 
         // Render here
