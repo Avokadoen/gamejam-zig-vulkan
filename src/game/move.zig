@@ -17,8 +17,7 @@ stride: f32,
 velocity: f32,
 
 pub fn init(sprite: *Sprite, start: zlm.Vec2, end: zlm.Vec2, velocity: f32) Self{
-    const stride = 1/(end.sub(start).length()/ velocity);
-
+    const stride = 1 / (end.sub(start).length() / velocity);
     return Self {
         .sprite = sprite,
         .start = start,
@@ -34,3 +33,4 @@ pub fn tick(self: *Self, delta_time: f32) void {
     const pos = self.start.lerp(self.end, self.t);
     self.sprite.setPosition(pos);
 }
+

@@ -17,7 +17,7 @@ last_update: f32,
 update_frequency: f32,
 
 /// caller must make sure to call deinit
-pub fn init(allocator: *Allocator, sprite: *Sprite, textures: []TextureHandle, update_frequency: f32) !Self {
+pub fn init(allocator: *Allocator, sprite: *Sprite, textures: []const TextureHandle, update_frequency: f32) !Self {
     var alloc_textures = try allocator.alloc(TextureHandle, textures.len);
     std.mem.copy(TextureHandle, alloc_textures, textures);
 

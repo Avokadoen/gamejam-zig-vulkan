@@ -16,6 +16,7 @@ const render2d = @import("render2d/render2d.zig");
 const game = @import("game/game.zig");
 const Anim = game.Anim;
 const Move = game.Move;
+const Unit = game.Unit;
 pub const application_name = "zig vulkan";
 
 // TODO: wrap this in render to make main seem simpler :^)
@@ -77,6 +78,8 @@ pub fn main() anyerror!void {
     defer castle_anim.deinit();
 
     var unit_move: Move = undefined;
+    var unit_swordman: Unit = undefined;
+    
 
     var draw_api = blk: {
         var init_api = try render2d.init(allocator, ctx, 25);
@@ -134,11 +137,20 @@ pub fn main() anyerror!void {
                 texture_handles[4].height * 4
             )
         );
-
+        const anim_move = [_]render2d.TextureHandle{ texture_handles[0], texture_handles[1]};
+        const anim_attack = [_]render2d.TextureHandle{ texture_handles[0], texture_handles[2]};
         unit_move = Move.init(&sprites[3], zlm.Vec2.new( 400, 200), zlm.Vec2.new(-400, -200), 100);
-
+        unit_swordman = try Unit.init(
+            allocator, 
+            &sprites[3], 
+            100, 10, 100, 50, 2, 
+            [2][]const render2d.TextureHandle{&anim_move, &anim_attack}, 
+            unit_move
+        );
+        unit_swordman.setState(.attacking);
         break :blk try init_api.initDrawApi(.{ .every_ms = 14 });
     };
+    defer unit_swordman.deinit();
     defer draw_api.deinit();
 
     var prev_frame = std.time.milliTimestamp();
@@ -150,7 +162,7 @@ pub fn main() anyerror!void {
         const dt = @floatCast(f32, delta_time);
         
         castle_anim.tick(dt);
-        unit_move.tick(dt);
+        unit_swordman.tick(dt);
 
         // Render here
         try draw_api.draw();
