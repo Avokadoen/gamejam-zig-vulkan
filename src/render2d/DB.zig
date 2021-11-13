@@ -219,11 +219,11 @@ pub fn getIndex(self: *DB, sprite_id: *Id) Index {
     return @as(Index, sprite_id.value);
 }
 
-pub fn flush(self: *DB) !void {
-    try self.positions.signalChangesPushed();
-    try self.scales.signalChangesPushed();
-    try self.rotations.signalChangesPushed();
-    try self.uv_indices.signalChangesPushed();
+pub fn flush(self: *DB) void {
+    self.positions.signalChangesPushed();
+    self.scales.signalChangesPushed();
+    self.rotations.signalChangesPushed();
+    self.uv_indices.signalChangesPushed();
 }
 
 /// generate uv buffer based on 
@@ -274,7 +274,7 @@ fn StorageType(comptime T: type) type {
             try self.storage.append(item);
         }
 
-        pub inline fn updateAt(self: *Self, at: Index, new_value: T) !void {
+        pub inline fn updateAt(self: *Self, at: Index, new_value: T) void {
             // update value
             self.storage.items[at] = new_value;
 
@@ -283,7 +283,7 @@ fn StorageType(comptime T: type) type {
             self.delta.has_changes = true;
         }
 
-        pub inline fn signalChangesPushed(self: *Self) !void {
+        pub inline fn signalChangesPushed(self: *Self) void {
             self.delta.from = 0;
             self.delta.to   = 0;
             self.delta.has_changes = false;

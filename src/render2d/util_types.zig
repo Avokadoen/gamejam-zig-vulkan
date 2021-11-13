@@ -2,8 +2,8 @@ const zlm = @import("zlm");
 
 pub const TextureHandle = struct {
     id: c_int,
-    width: u32,
-    height: u32,
+    width: f32,
+    height: f32,
 };
 
 pub const UV = struct {

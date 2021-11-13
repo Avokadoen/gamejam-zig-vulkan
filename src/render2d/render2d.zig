@@ -86,8 +86,8 @@ pub const InitializedApi = struct {
 
         const handle = TextureHandle{
             .id = @intCast(c_int, self.images.items.len - 1),
-            .width = @intCast(u32, image.width),
-            .height = @intCast(u32, image.height),
+            .width = @intToFloat(f32, image.width),
+            .height = @intToFloat(f32, image.height),
         };
 
         try self.image_paths.put(path, handle);
@@ -109,10 +109,10 @@ pub const InitializedApi = struct {
         self.db_ptr.*.layer_data.items[self.db_ptr.*.layer_data.items.len-1].len += 1;
 
         const index = self.db_ptr.*.getIndex(&new_sprite.db_id);
-        try self.db_ptr.*.positions.updateAt(index, position);
-        try self.db_ptr.*.scales.updateAt(index, size);
-        try self.db_ptr.*.rotations.updateAt(index, zlm.toRadians(rotation));
-        try self.db_ptr.*.uv_indices.updateAt(index, texture.id);
+        self.db_ptr.*.positions.updateAt(index, position);
+        self.db_ptr.*.scales.updateAt(index, size);
+        self.db_ptr.*.rotations.updateAt(index, zlm.toRadians(rotation));
+        self.db_ptr.*.uv_indices.updateAt(index, texture.id);
 
         return new_sprite;
     }
@@ -366,7 +366,7 @@ pub fn DrawApi(comptime rate: BufferUpdateRate) type {
                         user_ctx.*.last_update_counter = 0;
 
                         if (user_ctx.*.update_frame_count >= image_count) {
-                            user_ctx.*.db_ptr.*.flush() catch {};
+                            user_ctx.*.db_ptr.*.flush();
                         }
                     }
 

@@ -13,6 +13,9 @@ const consts = render.consts;
 const input = @import("input.zig");
 const render2d = @import("render2d/render2d.zig");
 
+const game = @import("game/game.zig");
+const Anim = game.Anim;
+
 pub const application_name = "zig vulkan";
 
 // TODO: wrap this in render to make main seem simpler :^)
@@ -32,6 +35,8 @@ pub fn main() anyerror!void {
         }
     }
     const allocator = if (consts.enable_validation_layers) &alloc.allocator else alloc;
+
+
     
     // Initialize the library *
     try glfw.init();
@@ -64,21 +69,61 @@ pub fn main() anyerror!void {
     try input.init(window, keyInputFn, mouseBtnInputFn, cursorPosInputFn);
     defer input.deinit();
 
-    var texture_handles: [3]render2d.TextureHandle = undefined;
+    var texture_handles: [6]render2d.TextureHandle = undefined;
     var sprites: [3]render2d.Sprite = undefined; 
+
+    var castle_anim: Anim = undefined;
+    defer castle_anim.deinit();
+
     var draw_api = blk: {
         var init_api = try render2d.init(allocator, ctx, 25);
 
+        // load all textures that we will be using
         texture_handles[0] = try init_api.loadTexture("../assets/images/units/unit0000.png"[0..]);
         texture_handles[1] = try init_api.loadTexture("../assets/images/units/unit0001.png"[0..]);
         texture_handles[2] = try init_api.loadTexture("../assets/images/units/unit0002.png"[0..]);
 
+        texture_handles[3] = try init_api.loadTexture("../assets/images/levels/map.png"[0..]);
+        texture_handles[4] = try init_api.loadTexture("../assets/images/structures/castle0000.png"[0..]);
+        texture_handles[5] = try init_api.loadTexture("../assets/images/structures/castle0001.png"[0..]);
+
         const window_size = try window.getSize();
-        const windowf = @intToFloat(f32, window_size.height);
+        const window_width = @intToFloat(f32, window_size.width);
+        const window_height = @intToFloat(f32, window_size.height);
      
-        sprites[0] = try init_api.createSprite(texture_handles[0], zlm.Vec2.new(0, 0), 0, zlm.Vec2.new(windowf, windowf));
-        sprites[1] = try init_api.createSprite(texture_handles[1], zlm.Vec2.new(-100, 0), 0, zlm.Vec2.new(windowf, windowf));
-        sprites[2] = try init_api.createSprite(texture_handles[2], zlm.Vec2.new(100, 0), 0, zlm.Vec2.new(windowf, windowf));
+        // create map background sprite
+        sprites[0] = try init_api.createSprite(
+            texture_handles[3], 
+            zlm.Vec2.new(0, 0), 
+            0, 
+            zlm.Vec2.new(window_width, window_height)
+        );
+
+        // create enemy castle sprite
+        sprites[1] = try init_api.createSprite(
+            texture_handles[4], 
+            zlm.Vec2.new(-800, 390), 
+            0, 
+            zlm.Vec2.new(
+                texture_handles[4].width * 2, 
+                texture_handles[4].height * 2
+            )
+        );
+        castle_anim = try Anim.init(allocator, &sprites[1], &[_]render2d.TextureHandle{ texture_handles[4], texture_handles[5] }, 1);
+
+        // create player castle sprite
+        sprites[2] = try init_api.createSprite(
+            texture_handles[4], 
+            zlm.Vec2.new(800, -350), 
+            0, 
+            zlm.Vec2.new(
+                texture_handles[4].width * 2, 
+                texture_handles[4].height * 2
+            )
+        );
+
+        // sprites[1] = try init_api.createSprite(texture_handles[1], zlm.Vec2.new(-100, 0), 0, zlm.Vec2.new(windowf, windowf));
+        // sprites[2] = try init_api.createSprite(texture_handles[2], zlm.Vec2.new(100, 0), 0, zlm.Vec2.new(windowf, windowf));
   
         break :blk try init_api.initDrawApi(.{ .every_ms = 14 });
     };
@@ -91,7 +136,8 @@ pub fn main() anyerror!void {
         delta_time = @intToFloat(f64, current_frame - prev_frame) / @as(f64, std.time.ms_per_s);
         // f32 variant of delta_time
         const dt = @floatCast(f32, delta_time);
-        _ = dt;
+        
+        castle_anim.tick(dt);
 
         // Render here
         try draw_api.draw();
