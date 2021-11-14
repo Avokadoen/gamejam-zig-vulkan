@@ -122,5 +122,5 @@ pub fn getPlayerUnit(number: usize) *render2d.Sprite {
 }
 
 pub fn getEnemyUnit(number: usize) *render2d.Sprite {
-    return &sprites[@enumToInt(Sprites.enemy_sprite) + number];
+    return &sprites[@enumToInt(Sprites.player_sprite) + team_size + number];
 }

@@ -94,10 +94,6 @@ pub fn initGui(allocator: *Allocator) !void {
 pub fn globalTick(delta_time: f32) void {
     player_castle.tick(delta_time);
     enemy_castle.tick(delta_time);
-    swordman_prototype.tick(delta_time);
-
-    enemy_castle.spawnUnit() catch {};
-    player_castle.spawnUnit() catch {};
 }
 
 
@@ -119,7 +115,8 @@ pub fn deinitGui() void {
 // ---------------- INPUT HANDLING -------------------------------- //
 
 fn btnCallback() void {
-    std.debug.print("hello from button!\n", .{});
+    player_castle.spawnUnit() catch {};
+    enemy_castle.spawnUnit() catch {};
 }
 
 /// extend main's mouse button input handling
