@@ -22,6 +22,7 @@ swordman_clone: Unit,
 unit_sprites: *[1000]Sprite,
 units: [1000]Unit,
 
+spawn_pos: zlm.Vec2,
 enemy_pos: zlm.Vec2,
 
 state: State,
@@ -35,7 +36,7 @@ units_spawned: u32,
 
 attack_speed: f32,
 
-pub fn init(allocator: *Allocator, sprite: *Sprite, swordman_clone: Unit, unit_sprites: *[1000]Sprite, health: i32, damage: i32, range: i32, attack_speed: f32, textures: [2][]const render2d.TextureHandle, enemy_pos: zlm.Vec2) !Self {
+pub fn init(allocator: *Allocator, sprite: *Sprite, swordman_clone: Unit, unit_sprites: *[1000]Sprite, health: i32, damage: i32, range: i32, attack_speed: f32, textures: [2][]const render2d.TextureHandle, spawn_pos: zlm.Vec2, enemy_pos: zlm.Vec2) !Self {
     
     var anim: [2]Anim = undefined;
     anim[0] = try Anim.init(allocator, sprite, textures[0], 1);
@@ -52,6 +53,7 @@ pub fn init(allocator: *Allocator, sprite: *Sprite, swordman_clone: Unit, unit_s
         .attack_speed = attack_speed,
         .state = State.idle,
         .anims = anim,
+        .spawn_pos = spawn_pos,
         .enemy_pos = enemy_pos,
         .unit_sprites = unit_sprites,
         .units_spawned = 0,
@@ -75,12 +77,12 @@ pub fn tick(self: *Self, delta_time: f32) void{
 }
 
 pub fn spawnUnit(self: *Self) !void{
-    
     if (self.units_spawned < 1000) {
-
         self.units[self.units_spawned] = try self.swordman_clone.clone(&self.unit_sprites[self.units_spawned]);
+        self.units[self.units_spawned].setMove(self.spawn_pos, self.enemy_pos);
         self.units_spawned += 1;
     }
+
     
 }
 

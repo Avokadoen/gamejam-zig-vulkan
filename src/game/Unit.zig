@@ -19,7 +19,6 @@ pub const State = enum(usize) {
 sprite: *Sprite,
 state: State,
 allocator: *Allocator,
-textures: [2][]const render2d.TextureHandle,
 
 anims: [2]Anim,
 move: ?Move,
@@ -38,9 +37,8 @@ pub fn init(allocator: *Allocator, sprite: *Sprite, health: i32, damage: i32, mo
     anim[1] = try Anim.init(allocator, sprite, textures[1], attack_speed);
     errdefer anim[1].deinit();
 
-    return Self {
+    return Self{
         .allocator = allocator,
-        .textures = textures,
         .sprite = sprite,
         .health = health,
         .damage = damage,
@@ -61,19 +59,19 @@ pub fn setMove(self: *Self, start: zlm.Vec2, end: zlm.Vec2) void {
     self.move = Move.init(self.sprite, start, end, self.move_speed);
 }
 
-pub fn tick(self: *Self, delta_time: f32) void{
+pub fn tick(self: *Self, delta_time: f32) void {
     self.anims[@enumToInt(self.state)].tick(delta_time);
 
-    if(self.state == .moving){
+    if (self.state == .moving) {
         if (self.move) |*some| {
             some.tick(delta_time);
         }
     }
 }
 
-pub fn clone(self: Self, sprite: *Sprite) !Self{
-    var uni: Self = try Self.init(self.allocator, sprite, self.health, self.damage, self.move_speed, self.range, self.attack_speed, self.textures);
-    uni.setMove(zlm.Vec2.new(800, -350), zlm.Vec2.new(-800, 390));
+pub fn clone(self: Self, sprite: *Sprite) !Self {
+    const textures = [2][]const render2d.TextureHandle{ self.anims[0].textures, self.anims[1].textures };
+    var uni: Self = try Self.init(self.allocator, sprite, self.health, self.damage, self.move_speed, self.range, self.attack_speed, textures);
     return uni;
 }
 

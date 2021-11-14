@@ -17,6 +17,8 @@ var hover_button: ?Button = null;
 
 var texture_handles: [8]render2d.TextureHandle = undefined;
 var sprites: [5]render2d.Sprite = undefined; 
+var player_sprites: [1000]render2d.Sprite = undefined;
+var enemy_sprites: [1000]render2d.Sprite = undefined;
 
 var unit_move: Move = undefined;
 var unit_swordman: Unit = undefined;
@@ -81,11 +83,11 @@ pub fn createAllSprites(api: *render2d.InitializedApi, w_width: f32, w_height: f
 
     sprites[3] = try api.createSprite(
         texture_handles[0], 
-        Vec2.new(-200, 0), 
+        Vec2.new(-20000, 0), 
         0, 
         Vec2.new(
-            texture_handles[4].width * 4, 
-            texture_handles[4].height * 4
+            texture_handles[4].width, 
+            texture_handles[4].height
         )
     );
 
@@ -98,6 +100,33 @@ pub fn createAllSprites(api: *render2d.InitializedApi, w_width: f32, w_height: f
             texture_handles[4].height * 4
         )
     );
+
+    {
+        var i:u32 = 0;
+        while (i < 1000) : (i += 1) {
+
+            player_sprites[i] = try api.createSprite(
+                texture_handles[0], 
+                Vec2.new(-20000, 0), 
+                0, 
+                Vec2.new(
+                    texture_handles[4].width, 
+                    texture_handles[4].height
+                )
+            );
+
+            enemy_sprites[i] = try api.createSprite(
+                texture_handles[0], 
+                Vec2.new(-20000, 0), 
+                0, 
+                Vec2.new(
+                    texture_handles[4].width, 
+                    texture_handles[4].height
+                )
+            );
+        }
+    }
+
 }
 
 /// caller must make sure to call deinitUnits
@@ -111,7 +140,6 @@ pub fn initAllUnits(allocator: *Allocator) !void {
         100, 25, 100, 50, 0.5, 
         [2][]const render2d.TextureHandle{&anim_move, &anim_attack}
     );
-    unit_swordman.setMove(Vec2.new(400, 200), Vec2.new(-400, -200));
 }
 
 /// caller must make sure to call deinitCastles
@@ -122,16 +150,26 @@ pub fn initCastles(allocator: *Allocator) !void {
     player_castle = try Castle.init(
         allocator,
         &sprites[1],
+        unit_swordman,
+        &player_sprites,
         2000, 300, 200, 1.5,
-        [2][]const render2d.TextureHandle{&caste_anim_idle, &caste_anim_attack}
+        [2][]const render2d.TextureHandle{&caste_anim_idle, &caste_anim_attack},
+        Vec2.new(800, -350),
+        Vec2.new(-800, 390)
     );
 
     enemy_castle = try Castle.init(
         allocator,
         &sprites[2],
+        unit_swordman,
+        &enemy_sprites,
         2000, 300, 200, 1.5,
-        [2][]const render2d.TextureHandle{&caste_anim_idle, &caste_anim_attack}
+        [2][]const render2d.TextureHandle{&caste_anim_idle, &caste_anim_attack},
+        Vec2.new(-800, 390),
+        Vec2.new(800, -350)
     );
+    try enemy_castle.spawnUnit();
+    try player_castle.spawnUnit();
 }
 
 /// caller must make sure to calle deinitGui
