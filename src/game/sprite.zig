@@ -105,11 +105,11 @@ pub inline fn createAllSprites(api: *render2d.InitializedApi, w_width: f32, w_he
 
     getGlobal(.spawn_btn).* = try api.createSprite(
         texture.get(.btn_idle), 
-        Vec2.new(0, 0), 
+        Vec2.new(-750, -400), 
         0, 
         Vec2.new(
-            texture.get(.btn_idle).width * 4, 
-            texture.get(.btn_idle).height * 4
+            texture.get(.btn_idle).width * 2, 
+            texture.get(.btn_idle).height * 2
         )
     );
 
