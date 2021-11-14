@@ -30,13 +30,15 @@ damage: f32,
 move_speed: f32,
 range: f32,
 
+
+walk_update_rate: f32,
 attack_speed: f32,
 last_attack: f32 = 0,
 
-pub fn init(allocator: *Allocator, sprite: *Sprite, health: f32, damage: f32, move_speed: f32, range: f32, attack_speed: f32, textures: [2][]const render2d.TextureHandle) !Self {
+pub fn init(allocator: *Allocator, sprite: *Sprite, walk_update_rate: f32, health: f32, damage: f32, move_speed: f32, range: f32, attack_speed: f32, textures: [2][]const render2d.TextureHandle) !Self {
     // std.debug.print("start pos: {d} {d} {d}\n", .{sprite.db_id, sprite.getPosition().x, sprite.getPosition().y});
     var anim: [2]Anim = undefined;
-    anim[0] = try Anim.init(allocator, sprite, textures[0], 1);
+    anim[0] = try Anim.init(allocator, sprite, textures[0], walk_update_rate);
     errdefer anim[0].deinit();
     anim[1] = try Anim.init(allocator, sprite, textures[1], attack_speed);
     errdefer anim[1].deinit();
@@ -48,6 +50,7 @@ pub fn init(allocator: *Allocator, sprite: *Sprite, health: f32, damage: f32, mo
         .damage = damage,
         .move_speed = move_speed,
         .range = range,
+        .walk_update_rate = walk_update_rate,
         .attack_speed = attack_speed,
         .state = State.moving,
         .anims = anim,
@@ -142,7 +145,7 @@ pub fn tick(self: *Self, delta_time: f32, opponent_castle: *Castle) void {
 
 pub fn clone(self: Self, sprite: *Sprite) !Self {
     const textures = [2][]const render2d.TextureHandle{ self.anims[0].textures, self.anims[1].textures };
-    var uni: Self = try Self.init(self.allocator, sprite, self.health, self.damage, self.move_speed, self.range, self.attack_speed, textures);
+    var uni: Self = try Self.init(self.allocator, sprite, self.walk_update_rate, self.health, self.damage, self.move_speed, self.range, self.attack_speed, textures);
 
     return uni;
 }

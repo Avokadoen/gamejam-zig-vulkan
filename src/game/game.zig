@@ -46,6 +46,7 @@ pub fn initAllUnits(allocator: *Allocator) !void {
     swordman_prototype = try Unit.init(
         allocator, 
         sprite.getGlobal(.sword_man_prototype), 
+        0.2,
         100, 25, 100, 25, 0.5, 
         [2][]const render2d.TextureHandle{&sword_man_anim_move, &sword_man_anim_attack}
     );
@@ -55,7 +56,8 @@ pub fn initAllUnits(allocator: *Allocator) !void {
 
     laser_goblin_prototype = try Unit.init(
         allocator, 
-        sprite.getGlobal(.laser_goblin_prototype), 
+        sprite.getGlobal(.laser_goblin_prototype),
+        0.3,
         50, 10, 30, 300, 1, 
         [2][]const render2d.TextureHandle{&laser_goblin_anim_move, &laser_goblin_anim_attack}
     );
@@ -109,6 +111,7 @@ pub fn globalTick(delta_time: f32) void {
     player_castle.tick(delta_time);
     enemy_castle.tick(delta_time);
 
+    // embrace the chaos :^)
     btnCallback();
 }
 
