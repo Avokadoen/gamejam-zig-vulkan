@@ -18,6 +18,8 @@ update_frequency: f32,
 
 /// caller must make sure to call deinit
 pub fn init(allocator: *Allocator, sprite: *Sprite, textures: []const TextureHandle, update_frequency: f32) !Self {
+    // std.debug.print("anim start pos: {d} {d} {d}\n", .{sprite.db_id, sprite.getPosition().x, sprite.getPosition().y});
+    
     var alloc_textures = try allocator.alloc(TextureHandle, textures.len);
     std.mem.copy(TextureHandle, alloc_textures, textures);
 

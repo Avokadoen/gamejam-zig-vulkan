@@ -28,7 +28,6 @@ pub const Team = enum {
 sprite: *Sprite,
 swordman_clone: Unit,
 units: [game_sprite.team_size]Unit,
-outer_unit: usize,
 health_bar: HealthBar,
 
 spawn_pos: zlm.Vec2,
@@ -40,10 +39,9 @@ anims: [2]Anim,
 
 health_max: f32,
 health_current: f32,
-damage: i32,
+damage: f32,
 range: i32,
 units_spawned: u32,
-highest_spawned: u32,
 
 attack_speed: f32,
 
@@ -53,7 +51,7 @@ opponent: *Self,
 
 rnd: Rnd,
 
-pub fn init(allocator: *Allocator, sprite: *Sprite, swordman_clone: Unit, health: f32, damage: i32, range: i32, attack_speed: f32, textures: [2][]const render2d.TextureHandle, team: Team) !Self {
+pub fn init(allocator: *Allocator, sprite: *Sprite, swordman_clone: Unit, health: f32, damage: f32, range: i32, attack_speed: f32, textures: [2][]const render2d.TextureHandle, team: Team) !Self {
     var anim: [2]Anim = undefined;
     anim[0] = try Anim.init(allocator, sprite, textures[0], 1);
     errdefer anim[0].deinit();
@@ -110,9 +108,7 @@ pub fn init(allocator: *Allocator, sprite: *Sprite, swordman_clone: Unit, health
         .spawn_pos = self_pos,
         .enemy_pos = enemy_pos,
         .units_spawned = 0,
-        .highest_spawned = 0,
         .units = undefined,
-        .outer_unit = 0,
         .unit_getter = unit_getter,
         .opponent = undefined,
         .rnd = rnd,
@@ -126,10 +122,7 @@ pub fn setOpponent(self: *Self, castle: *Self) void {
 pub fn takeDamage(self: *Self, dmg: f32) void{
     self.health_current -= dmg;
 
-    if (self.health_current <=0){
-        
-        
-        //self.die();
+    if (self.health_current <= 0){
     } else {
         self.health_bar.setValue(self.health_current / self.health_max);
     }
@@ -141,44 +134,27 @@ pub fn setState(self: *Self, state: State) void {
     self.state = state;
 }
 
-pub fn getOuterUnit(self: *Self) *Unit {
-    return &self.units[self.outer_unit];
+pub fn getOuterUnit(self: *Self) ?*Unit {
+    if (self.outer_unit) |some| {
+        return &self.units[some];
+    }
+    return null;
 }
 
 pub fn tick(self: *Self, delta_time: f32) void{
     self.anims[@enumToInt(self.state)].tick(delta_time);
-
-    if (self.units_spawned == 0) return;
+    
     {
-        const castle_pos = self.sprite.getPosition();
-        var outer_distance = self.units[self.outer_unit].sprite.getPosition().sub(castle_pos).length2();
-
         var i:u32 = 0;
         while (i < self.units_spawned) : (i += 1) {
-            if (self.units[i].state == .dead) {
-                self.units_spawned -= 1;
-                if (self.units_spawned == 0) {
-                    break;
-                } else if (i == self.units_spawned) {
-                    std.mem.swap(Unit, &self.units[i], &self.units[0]);
-                    continue;
-                } else {
-                    std.mem.swap(Unit, &self.units[i], &self.units[self.units_spawned]);
-                }
-            }
+            // if (self.units[i].state == .dead) {
+            //     self.units[i].deinit();
+            //     std.mem.swap(Unit, &self.units[i], &self.units[self.units_spawned-1]);
+            //     self.units_spawned -= 1;
+            //     if (self.units_spawned == 0) break;
+            // }
 
-            self.units[i].tick(delta_time, self.opponent.getOuterUnit());
-
-            if (i == self.outer_unit) {
-                continue;
-            }
-
-            const position = self.units[i].sprite.getPosition();
-            const distance = position.sub(castle_pos).length2();
-            if (distance > outer_distance) {
-                self.outer_unit = i;
-                outer_distance = distance; 
-            }
+            self.units[i].tick(delta_time, self.opponent);
         }
     }
 }
@@ -190,10 +166,14 @@ pub fn spawnUnit(self: *Self) !void{
         const start = Vec2.new(self.spawn_pos.x + x_offset, self.spawn_pos.y + y_offset);
         const end   = Vec2.new(self.enemy_pos.x + x_offset, self.enemy_pos.y + y_offset);
 
-        self.units[self.units_spawned] = try self.swordman_clone.clone(self.unit_getter(self.units_spawned));
+        var sprite = self.unit_getter(self.units_spawned);
+        sprite.setPosition(start);
+        sprite.setTexture(self.swordman_clone.anims[0].textures[0]);
+
+        self.units[self.units_spawned] = try self.swordman_clone.clone(sprite);
         self.units[self.units_spawned].setMove(start, end);
+
         self.units_spawned += 1;
-        self.highest_spawned = std.math.max(self.highest_spawned, self.units_spawned);
     }
 }
 
@@ -201,8 +181,8 @@ pub fn deinit(self: Self) void {
     self.anims[0].deinit();
     self.anims[1].deinit();
     {   
-        var i:u32 = 0;
-        while (i < self.highest_spawned) : (i += 1) {
+        var i: u32 = 0;
+        while (i < self.units_spawned) : (i += 1) {
             self.units[i].deinit();
         }
     }

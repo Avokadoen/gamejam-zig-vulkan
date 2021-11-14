@@ -59,7 +59,7 @@ pub fn initCastles(allocator: *Allocator) !void {
         allocator,
         sprite.getGlobal(.player_castle),
         swordman_prototype,
-        2000, 300, 200, 1.5,
+        20, 300, 200, 1.5,
         [2][]const render2d.TextureHandle{&caste_anim_idle, &caste_anim_attack},
         .player
     );
@@ -68,13 +68,14 @@ pub fn initCastles(allocator: *Allocator) !void {
         allocator,
         sprite.getGlobal(.enemy_castle),
         swordman_prototype,
-        2000, 300, 200, 1.5,
+        20, 300, 200, 1.5,
         [2][]const render2d.TextureHandle{&caste_anim_idle, &caste_anim_attack},
         .enemy
     );
 
     player_castle.setOpponent(&enemy_castle);
     enemy_castle.setOpponent(&player_castle);
+
 }
 
 /// caller must make sure to calle deinitGui
@@ -93,6 +94,8 @@ pub fn initGui(allocator: *Allocator) !void {
 pub fn globalTick(delta_time: f32) void {
     player_castle.tick(delta_time);
     enemy_castle.tick(delta_time);
+
+    btnCallback();
 }
 
 

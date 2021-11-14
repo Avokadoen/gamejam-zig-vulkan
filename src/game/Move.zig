@@ -34,7 +34,4 @@ pub fn tick(self: *Self, delta_time: f32) void {
     self.sprite.setPosition(pos);
 }
 
-pub fn clone(self: *Self, sprite: *Sprite) Self{
-    return init(sprite, self.start, self.end, self.velocity);
-}
 
