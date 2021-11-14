@@ -70,8 +70,8 @@ pub fn init(allocator: *Allocator, sprite: *Sprite, swordman_clone: Unit, health
     var unit_getter: fn(number: usize) *render2d.Sprite = undefined;
 
     if (team == Team.player){
-        self_pos = zlm.Vec2.new(800, -350);
-        enemy_pos = zlm.Vec2.new(-800, 390);
+        self_pos = zlm.Vec2.new(800, -400);
+        enemy_pos = zlm.Vec2.new(-800, 350);
 
         health_bar_pos = zlm.Vec2.new(450, -450);
 
@@ -80,8 +80,8 @@ pub fn init(allocator: *Allocator, sprite: *Sprite, swordman_clone: Unit, health
 
         unit_getter = game_sprite.getPlayerUnit;
     } else{
-        self_pos = zlm.Vec2.new(-800, 390);
-        enemy_pos = zlm.Vec2.new(800, -350);
+        self_pos = zlm.Vec2.new(-800, 350);
+        enemy_pos = zlm.Vec2.new(800, -400);
         
         health_bar_pos = zlm.Vec2.new(-450, 490);
 
