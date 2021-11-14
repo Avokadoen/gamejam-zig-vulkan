@@ -18,6 +18,7 @@ var buttons: ArrayList(Button) = undefined;
 var hover_button: ?Button = null;
 
 var swordman_prototype: Unit = undefined;
+var laser_goblin_prototype: Unit = undefined;
 
 var player_castle: Castle = undefined;
 var enemy_castle: Castle = undefined;
@@ -40,14 +41,25 @@ pub fn createAllSprites(api: *render2d.InitializedApi, w_width: f32, w_height: f
 /// caller must make sure to call deinitUnits
 pub fn initAllUnits(allocator: *Allocator) !void {
     // create a test unit for now
-    const anim_move = [_]render2d.TextureHandle{ texture.get(.unit0), texture.get(.unit1)};
-    const anim_attack = [_]render2d.TextureHandle{ texture.get(.unit0), texture.get(.unit2)};
+    const sword_man_anim_move = [_]render2d.TextureHandle{ texture.get(.sword_man_idle), texture.get(.sword_man_move)};
+    const sword_man_anim_attack = [_]render2d.TextureHandle{ texture.get(.sword_man_idle), texture.get(.sword_man_attack)};
     swordman_prototype = try Unit.init(
         allocator, 
         sprite.getGlobal(.sword_man_prototype), 
         100, 25, 100, 50, 0.5, 
-        [2][]const render2d.TextureHandle{&anim_move, &anim_attack}
+        [2][]const render2d.TextureHandle{&sword_man_anim_move, &sword_man_anim_attack}
     );
+
+    const laser_goblin_anim_move = [_]render2d.TextureHandle{ texture.get(.laser_goblin_move0), texture.get(.laser_goblin_move1)};
+    const laser_goblin_anim_attack = [_]render2d.TextureHandle{ texture.get(.laser_goblin_attack0), texture.get(.laser_goblin_attack1), texture.get(.laser_goblin_attack1)};
+
+    laser_goblin_prototype = try Unit.init(
+        allocator, 
+        sprite.getGlobal(.laser_goblin_prototype), 
+        50, 10, 30, 300, 1, 
+        [2][]const render2d.TextureHandle{&laser_goblin_anim_move, &laser_goblin_anim_attack}
+    );
+
 }
 
 /// caller must make sure to call deinitCastles
@@ -61,6 +73,7 @@ pub fn initCastles(allocator: *Allocator) !void {
         allocator,
         sprite.getGlobal(.player_castle),
         swordman_prototype,
+        laser_goblin_prototype,
         2000, 300, 200, 1.5,
         [2][]const render2d.TextureHandle{&caste_anim_idle, &caste_anim_attack},
         .player
@@ -70,6 +83,7 @@ pub fn initCastles(allocator: *Allocator) !void {
         allocator,
         sprite.getGlobal(.enemy_castle),
         swordman_prototype,
+        laser_goblin_prototype,
         2000, 300, 200, 1.5,
         [2][]const render2d.TextureHandle{&caste_anim_idle, &caste_anim_attack},
         .enemy

@@ -25,6 +25,7 @@ pub const Team = enum {
 
 sprite: *Sprite,
 swordman_clone: Unit,
+laser_goblin_clone: Unit,
 units: [game_sprite.team_size]Unit,
 health_bar: HealthBar,
 
@@ -45,7 +46,7 @@ attack_speed: f32,
 
 unit_getter: fn(number: usize) *render2d.Sprite,
 
-pub fn init(allocator: *Allocator, sprite: *Sprite, swordman_clone: Unit, health: f32, damage: i32, range: i32, attack_speed: f32, textures: [2][]const render2d.TextureHandle, team: Team) !Self {
+pub fn init(allocator: *Allocator, sprite: *Sprite, swordman_clone: Unit, laser_goblin_clone: Unit, health: f32, damage: i32, range: i32, attack_speed: f32, textures: [2][]const render2d.TextureHandle, team: Team) !Self {
     var anim: [2]Anim = undefined;
     anim[0] = try Anim.init(allocator, sprite, textures[0], 1);
     errdefer anim[0].deinit();
@@ -90,6 +91,7 @@ pub fn init(allocator: *Allocator, sprite: *Sprite, swordman_clone: Unit, health
     return Self {
         .sprite = sprite,
         .swordman_clone = swordman_clone,
+        .laser_goblin_clone = laser_goblin_clone,
         .health_bar = health_bar_complete,
         .health_max = health,
         .health_current = health,
