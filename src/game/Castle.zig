@@ -1,7 +1,9 @@
 const std = @import("std");
+const Rnd = std.rand.DefaultPrng;
 const Allocator = std.mem.Allocator;
 
 const zlm = @import("zlm");
+const Vec2 = zlm.Vec2;
 
 const render2d = @import("../render2d/render2d.zig");
 const Sprite = render2d.Sprite;
@@ -48,6 +50,8 @@ unit_getter: fn(number: usize) *render2d.Sprite,
 
 opponent: *Self,
 
+rnd: Rnd,
+
 pub fn init(allocator: *Allocator, sprite: *Sprite, swordman_clone: Unit, health: f32, damage: i32, range: i32, attack_speed: f32, textures: [2][]const render2d.TextureHandle, team: Team) !Self {
     var anim: [2]Anim = undefined;
     anim[0] = try Anim.init(allocator, sprite, textures[0], 1);
@@ -89,6 +93,7 @@ pub fn init(allocator: *Allocator, sprite: *Sprite, swordman_clone: Unit, health
 
     const health_bar_complete = HealthBar.init(health_bar_pos, health_bar, health_bar_fill);
 
+    const rnd = Rnd.init(42);
 
     return Self {
         .sprite = sprite,
@@ -108,14 +113,13 @@ pub fn init(allocator: *Allocator, sprite: *Sprite, swordman_clone: Unit, health
         .outer_unit = 0,
         .unit_getter = unit_getter,
         .opponent = undefined,
+        .rnd = rnd,
     };
 }
 
 pub fn setOpponent(self: *Self, castle: *Self) void {
     self.opponent = castle;
 }
-
-
 
 pub fn takeDamage(self: *Self, dmg: f32) void{
     self.health_current -= dmg;
@@ -167,8 +171,13 @@ pub fn tick(self: *Self, delta_time: f32) void{
 
 pub fn spawnUnit(self: *Self) !void{
     if (self.units_spawned < game_sprite.team_size) {
+        const y_offset = self.rnd.random().float(f32) * 100 - 50;
+        const x_offset = self.rnd.random().float(f32) * 100 - 50;
+        const start = Vec2.new(self.spawn_pos.x + x_offset, self.spawn_pos.y + y_offset);
+        const end   = Vec2.new(self.enemy_pos.x + x_offset, self.enemy_pos.y + y_offset);
+
         self.units[self.units_spawned] = try self.swordman_clone.clone(self.unit_getter(self.units_spawned));
-        self.units[self.units_spawned].setMove(self.spawn_pos, self.enemy_pos);
+        self.units[self.units_spawned].setMove(start, end);
         self.units_spawned += 1;
     }
 }

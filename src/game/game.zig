@@ -45,7 +45,7 @@ pub fn initAllUnits(allocator: *Allocator) !void {
     swordman_prototype = try Unit.init(
         allocator, 
         sprite.getGlobal(.sword_man_prototype), 
-        100, 25, 100, 50, 0.5, 
+        100, 25, 100, 21, 0.5, 
         [2][]const render2d.TextureHandle{&anim_move, &anim_attack}
     );
 }

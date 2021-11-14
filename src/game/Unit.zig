@@ -80,7 +80,7 @@ pub fn tick(self: *Self, delta_time: f32, closest_opponent: *Self) void {
 
         const opponent_pos = closest_opponent.sprite.getPosition();
         const position = self.sprite.getPosition();
-        const distance = opponent_pos.sub(position).length2();
+        const distance = std.math.absFloat(opponent_pos.x - position.x);
         if (distance < self.range) {
             self.state = .attacking;
         }
