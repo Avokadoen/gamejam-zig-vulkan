@@ -80,6 +80,16 @@ fn bruteForceRangeCheck(self: *Self, opponent_castle: *Castle) ?*Self {
     return null;
 }
 
+fn castleRange(self: *Self, opponent_castle: *Castle) bool {
+    const self_pos = self.sprite.getPosition();
+    const target_pos = opponent_castle.sprite.getPosition().add(opponent_castle.sprite.getSize().scale(0.25));
+    const delta = target_pos.x - self_pos.x;
+    if (std.math.absFloat(delta) < self.range) {
+        return true;
+    }
+    return false;
+}
+
 pub fn tick(self: *Self, delta_time: f32, opponent_castle: *Castle) void {
     switch (self.state) {
         .moving => {
@@ -88,8 +98,14 @@ pub fn tick(self: *Self, delta_time: f32, opponent_castle: *Castle) void {
                 some.tick(delta_time);
             }
 
+            // TODO: combat struct to combine castle and units here
+            //       also to hold common combat stats ...
             if (self.bruteForceRangeCheck(opponent_castle)) |_| {
                 self.state = .attacking;
+            } else {
+                if (self.castleRange(opponent_castle)) {
+                    self.state = .attacking;
+                }
             }
         }, 
         .attacking => {
@@ -101,8 +117,16 @@ pub fn tick(self: *Self, delta_time: f32, opponent_castle: *Castle) void {
                     self.last_attack = 0;
                 }
             } else {
-                self.last_attack = 0;
-                self.state = .moving;
+                if (self.castleRange(opponent_castle)) {
+                    self.last_attack += delta_time;
+                    if (self.last_attack >= self.attack_speed) {
+                        opponent_castle.takeDamage(self.damage);
+                        self.last_attack = 0;
+                    }
+                } else {
+                    self.last_attack = 0;
+                    self.state = .moving;
+                }
             }
         },
         .dead => {
