@@ -46,7 +46,7 @@ pub fn initAllUnits(allocator: *Allocator) !void {
     swordman_prototype = try Unit.init(
         allocator, 
         sprite.getGlobal(.sword_man_prototype), 
-        100, 25, 100, 50, 0.5, 
+        100, 25, 100, 25, 0.5, 
         [2][]const render2d.TextureHandle{&sword_man_anim_move, &sword_man_anim_attack}
     );
 
@@ -122,6 +122,7 @@ pub fn deinitCastles() void {
 
 pub fn deinitUnits() void {
     swordman_prototype.deinit();
+    laser_goblin_prototype.deinit();
 }
 
 pub fn deinitGui() void {
