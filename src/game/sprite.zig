@@ -11,6 +11,10 @@ pub const Sprites = enum {
     enemy_castle,
     spawn_btn,
     sword_man_prototype,
+    player_health_bar,
+    player_health_bar_fill,
+    enemy_health_bar,
+    enemy_health_bar_fill,
     player_sprite,
     enemy_sprite,
 };
@@ -44,6 +48,50 @@ pub inline fn createAllSprites(api: *render2d.InitializedApi, w_width: f32, w_he
         )
     );
 
+
+    // create player health bar fill
+    getGlobal(.player_health_bar_fill).* = try api.createSprite(
+        texture.get(.health_bar_fill), 
+        Vec2.new(800, -350), 
+        0, 
+        Vec2.new(
+            texture.get(.health_bar_fill).width * 2, 
+            texture.get(.health_bar_fill).height
+        )
+    );
+
+    // create player health bar
+    getGlobal(.player_health_bar).* = try api.createSprite(
+        texture.get(.health_bar), 
+        Vec2.new(800, -350), 
+        0, 
+        Vec2.new(
+            texture.get(.health_bar).width * 2, 
+            texture.get(.health_bar).height
+        )
+    );
+
+    // create player health bar fill
+    getGlobal(.enemy_health_bar_fill).* = try api.createSprite(
+        texture.get(.health_bar_fill), 
+        Vec2.new(800, -350), 
+        0, 
+        Vec2.new(
+            texture.get(.health_bar_fill).width * 2, 
+            texture.get(.health_bar_fill).height
+        )
+    );
+
+    // create player health bar
+    getGlobal(.enemy_health_bar).* = try api.createSprite(
+        texture.get(.health_bar), 
+        Vec2.new(800, -350), 
+        0, 
+        Vec2.new(
+            texture.get(.health_bar).width * 2, 
+            texture.get(.health_bar).height
+        )
+    );
     // create enemy castle sprite
     getGlobal(.enemy_castle).* = try api.createSprite(
         texture.get(.castle_idle), 

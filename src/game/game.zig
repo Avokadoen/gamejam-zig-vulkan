@@ -55,26 +55,24 @@ pub fn initCastles(allocator: *Allocator) !void {
     const caste_anim_idle = [_]render2d.TextureHandle{texture.get(.castle_idle)};
     const caste_anim_attack = [_]render2d.TextureHandle{texture.get(.castle_spawn)};
 
+
+
     player_castle = try Castle.init(
         allocator,
         sprite.getGlobal(.player_castle),
-        sprite.getPlayerUnit,
         swordman_prototype,
         2000, 300, 200, 1.5,
         [2][]const render2d.TextureHandle{&caste_anim_idle, &caste_anim_attack},
-        Vec2.new(800, -350),
-        Vec2.new(-800, 390)
+        .player
     );
 
     enemy_castle = try Castle.init(
         allocator,
         sprite.getGlobal(.enemy_castle),
-        sprite.getEnemyUnit,
         swordman_prototype,
         2000, 300, 200, 1.5,
         [2][]const render2d.TextureHandle{&caste_anim_idle, &caste_anim_attack},
-        Vec2.new(-800, 390),
-        Vec2.new(800, -350)
+        .enemy
     );
 }
 

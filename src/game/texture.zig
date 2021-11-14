@@ -15,6 +15,8 @@ pub const Texture = enum {
     // gui 
     btn_idle,
     btn_click,
+    health_bar,
+    health_bar_fill,
 };
 
 pub const TexturePath = std.ComptimeStringMap([]const u8, .{
@@ -28,6 +30,9 @@ pub const TexturePath = std.ComptimeStringMap([]const u8, .{
 
     .{ "btn_idle",       "../assets/images/gui/test_btn_idle.png" },
     .{ "btn_click",    "../assets/images/gui/test_btn_clicked.png" },
+
+    .{ "health_bar",    "../assets/images/gui/healthbar.png" },
+    .{ "health_bar_fill",    "../assets/images/gui/healthbar_fill.png" },
 });
 
 var texture_handles: [TexturePath.kvs.len]render2d.TextureHandle = undefined;
