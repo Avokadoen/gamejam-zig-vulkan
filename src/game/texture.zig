@@ -33,17 +33,10 @@ pub const TexturePath = std.ComptimeStringMap([]const u8, .{
 var texture_handles: [TexturePath.kvs.len]render2d.TextureHandle = undefined;
 
 pub fn loadAllTextures(api: *render2d.InitializedApi) !void {
-    // load all textures that we will be using
-    texture_handles[@enumToInt(Texture.unit0)] = try api.loadTexture(TexturePath.get(@tagName(.unit0)).?);
-    texture_handles[@enumToInt(Texture.unit1)] = try api.loadTexture(TexturePath.get(@tagName(.unit1)).?);
-    texture_handles[@enumToInt(Texture.unit2)] = try api.loadTexture(TexturePath.get(@tagName(.unit2)).?);
-    texture_handles[@enumToInt(Texture.map)] = try api.loadTexture(TexturePath.get(@tagName(.map)).?);
-
-    texture_handles[@enumToInt(Texture.castle_idle)] = try api.loadTexture(TexturePath.get(@tagName(.castle_idle)).?);
-    texture_handles[@enumToInt(Texture.castle_spawn)] = try api.loadTexture(TexturePath.get(@tagName(.castle_spawn)).?);
-
-    texture_handles[@enumToInt(Texture.btn_idle)] = try api.loadTexture(TexturePath.get(@tagName(.btn_idle)).?);
-    texture_handles[@enumToInt(Texture.btn_click)] = try api.loadTexture(TexturePath.get(@tagName(.btn_click)).?);
+    const texture_info = @typeInfo(Texture).Enum;
+    inline for(texture_info.fields) |field| {
+        texture_handles[field.value] = try api.loadTexture(TexturePath.get(field.name).?);
+    }
 }
 
 pub inline fn get(texture: Texture) render2d.TextureHandle {
