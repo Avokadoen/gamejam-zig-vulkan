@@ -18,6 +18,8 @@ pub const State = enum(usize) {
 
 sprite: *Sprite,
 state: State,
+allocator: *Allocator,
+textures: [2][]const render2d.TextureHandle,
 
 anims: [2]Anim,
 move: Move,
@@ -38,6 +40,8 @@ pub fn init(allocator: *Allocator, sprite: *Sprite, health: i32, damage: i32, mo
     errdefer anim[1].deinit();
 
     return Self {
+        .allocator = allocator,
+        .textures = textures,
         .sprite = sprite,
         .health = health,
         .damage = damage,
@@ -59,9 +63,14 @@ pub fn tick(self: *Self, delta_time: f32) void{
     if(self.state == .moving){
         self.move.tick(delta_time);
     }
-    
-
 }
+
+pub fn clone(self: Self, sprite: *Sprite) !Self{
+    var move: Move = Move.init(sprite, zlm.Vec2.new(800, -350), zlm.Vec2.new(-800, 390), 100);
+    var uni: Self = try Self.init(self.allocator, sprite, self.health, self.damage, self.move_speed, self.range, self.attack_speed, self.textures, move);
+    return uni;
+}
+
 pub fn deinit(self: Self) void {
     self.anims[0].deinit();
     self.anims[1].deinit();
