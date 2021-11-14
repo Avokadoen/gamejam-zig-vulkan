@@ -67,8 +67,6 @@ pub fn initCastles(allocator: *Allocator) !void {
     const caste_anim_idle = [_]render2d.TextureHandle{texture.get(.castle_idle)};
     const caste_anim_attack = [_]render2d.TextureHandle{texture.get(.castle_spawn)};
 
-
-
     player_castle = try Castle.init(
         allocator,
         sprite.getGlobal(.player_castle),
@@ -88,6 +86,9 @@ pub fn initCastles(allocator: *Allocator) !void {
         [2][]const render2d.TextureHandle{&caste_anim_idle, &caste_anim_attack},
         .enemy
     );
+
+    player_castle.setOpponent(&enemy_castle);
+    enemy_castle.setOpponent(&player_castle);
 }
 
 /// caller must make sure to calle deinitGui
@@ -148,7 +149,7 @@ pub inline fn mouseBtnInputFn(event: input.MouseButtonEvent) void {
 pub inline fn cursorPosInputFn(event: input.CursorPosEvent) void {
     const vec_event = Vec2.new(
         @floatCast(f32, event.x) - window_width * 0.5, 
-        @floatCast(f32, event.y) - window_height * 0.5
+        (@floatCast(f32, event.y) - window_height * 0.5) * -1
     );
 
     var prev_button = hover_button;

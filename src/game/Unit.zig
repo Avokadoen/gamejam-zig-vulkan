@@ -14,6 +14,7 @@ const Self = @This();
 pub const State = enum(usize) {
     moving,
     attacking,
+    dead,
 };
 
 sprite: *Sprite,
@@ -26,11 +27,12 @@ move: ?Move,
 health: i32,
 damage: i32,
 move_speed: f32,
-range: i32,
+range: f32,
 
 attack_speed: f32,
+last_attack: f32 = 0,
 
-pub fn init(allocator: *Allocator, sprite: *Sprite, health: i32, damage: i32, move_speed: f32, range: i32, attack_speed: f32, textures: [2][]const render2d.TextureHandle) !Self {
+pub fn init(allocator: *Allocator, sprite: *Sprite, health: i32, damage: i32, move_speed: f32, range: f32, attack_speed: f32, textures: [2][]const render2d.TextureHandle) !Self {
     var anim: [2]Anim = undefined;
     anim[0] = try Anim.init(allocator, sprite, textures[0], 1);
     errdefer anim[0].deinit();
@@ -51,31 +53,51 @@ pub fn init(allocator: *Allocator, sprite: *Sprite, health: i32, damage: i32, mo
     };
 }
 
-
-
 pub fn takeDamage(self: *Self, dmg: i32) void{
     self.health -= dmg;
-    //if (self.health <=0){
-    //    self.die();
-    //}
-}
-
-//fn die(self: Self) void{}
-
-pub fn setState(self: *Self, state: State) void {
-    self.state = state;
+    if (self.health <= 0) {
+        self.sprite.setPosition(zlm.Vec2.new(-200000, 0));
+        self.state = .dead;
+    }
 }
 
 pub fn setMove(self: *Self, start: zlm.Vec2, end: zlm.Vec2) void {
     self.move = Move.init(self.sprite, start, end, self.move_speed);
 }
 
-pub fn tick(self: *Self, delta_time: f32) void {
-    self.anims[@enumToInt(self.state)].tick(delta_time);
+pub fn tick(self: *Self, delta_time: f32, closest_opponent: *Self) void {
+    switch (self.state) {
+        .moving => {
+            self.anims[@enumToInt(self.state)].tick(delta_time);
+            if (self.move) |*some| {
+                some.tick(delta_time);
+            }
 
-    if (self.state == .moving) {
-        if (self.move) |*some| {
-            some.tick(delta_time);
+            const opponent_pos = closest_opponent.sprite.getPosition();
+            const position = self.sprite.getPosition();
+            const distance = std.math.absFloat(opponent_pos.x - position.x);
+            if (distance < self.range) {
+                self.state = .attacking;
+            }
+        }, 
+        .attacking => {
+            const opponent_pos = closest_opponent.sprite.getPosition();
+            const position = self.sprite.getPosition();
+            const distance = std.math.absFloat(opponent_pos.x - position.x);
+            if (distance > self.range) {
+                self.state = .moving;
+            }
+
+            self.anims[@enumToInt(self.state)].tick(delta_time);
+            self.last_attack += delta_time;
+
+            if (self.last_attack >= self.attack_speed) {
+                closest_opponent.takeDamage(self.damage);
+                self.last_attack = 0;
+            }
+        },
+        .dead => {
+            return;
         }
     }
 }
