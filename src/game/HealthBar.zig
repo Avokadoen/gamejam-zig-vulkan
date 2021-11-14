@@ -5,11 +5,6 @@ const zlm = @import("zlm");
 const render2d = @import("../render2d/render2d.zig");
 const Sprite = render2d.Sprite;
 
-pub const Owner = enum {
-    enemy,
-    player
-};
-
 const Self = @This();
 
 bar: *Sprite,
@@ -21,14 +16,7 @@ bar_pos: zlm.Vec2,
 value: f32,
 
 /// init a health bar
-pub fn init(w_width: f32, w_height: f32, owner: Owner, bar: *Sprite, fill: *Sprite) Self {
-    const position = blk: {
-        if (owner == .player) {
-            break :blk zlm.Vec2.new(w_width * 0.5 - 300, w_height * -0.5 + 50);
-        } else {
-            break :blk zlm.Vec2.new(w_width * -0.5 + 300, w_height * 0.5 - 50);
-        }
-    };
+pub fn init(position: zlm.Vec2, bar: *Sprite, fill: *Sprite) Self {
     bar.setPosition(position);
     fill.setPosition(position);
 

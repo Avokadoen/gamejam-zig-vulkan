@@ -51,6 +51,17 @@ pub fn init(allocator: *Allocator, sprite: *Sprite, health: i32, damage: i32, mo
     };
 }
 
+
+
+pub fn takeDamage(self: *Self, dmg: i32) void{
+    self.health -= dmg;
+    //if (self.health <=0){
+    //    self.die();
+    //}
+}
+
+//fn die(self: Self) void{}
+
 pub fn setState(self: *Self, state: State) void {
     self.state = state;
 }

@@ -8,6 +8,7 @@ const Sprite = render2d.Sprite;
 
 const Anim = @import("Anim.zig");
 const Unit = @import("Unit.zig");
+const HealthBar = @import("HealthBar.zig");
 const game_sprite = @import("sprite.zig");
 
 const Self = @This();
@@ -17,10 +18,16 @@ pub const State = enum(usize) {
     spawning,
 };
 
+pub const Team = enum {
+    enemy,
+    player
+};
+
 sprite: *Sprite,
 swordman_clone: Unit,
 units: [game_sprite.team_size]Unit,
 outer_unit: usize,
+health_bar: HealthBar,
 
 spawn_pos: zlm.Vec2,
 enemy_pos: zlm.Vec2,
@@ -29,7 +36,8 @@ state: State,
 
 anims: [2]Anim,
 
-health: i32,
+health_max: f32,
+health_current: f32,
 damage: i32,
 range: i32,
 units_spawned: u32,
@@ -40,23 +48,60 @@ unit_getter: fn(number: usize) *render2d.Sprite,
 
 opponent: *Self,
 
-pub fn init(allocator: *Allocator, sprite: *Sprite, unit_getter: fn(number: usize) *render2d.Sprite, swordman_clone: Unit, health: i32, damage: i32, range: i32, attack_speed: f32, textures: [2][]const render2d.TextureHandle, spawn_pos: zlm.Vec2, enemy_pos: zlm.Vec2) !Self {
+pub fn init(allocator: *Allocator, sprite: *Sprite, swordman_clone: Unit, health: f32, damage: i32, range: i32, attack_speed: f32, textures: [2][]const render2d.TextureHandle, team: Team) !Self {
     var anim: [2]Anim = undefined;
     anim[0] = try Anim.init(allocator, sprite, textures[0], 1);
     errdefer anim[0].deinit();
     anim[1] = try Anim.init(allocator, sprite, textures[1], 1);
     errdefer anim[1].deinit();
 
+    var self_pos: zlm.Vec2 = undefined;
+    var enemy_pos: zlm.Vec2 = undefined;
+
+    var health_bar_pos: zlm.Vec2 = undefined;
+
+    var health_bar: *Sprite = undefined;
+    var health_bar_fill: *Sprite = undefined; 
+
+    var unit_getter: fn(number: usize) *render2d.Sprite = undefined;
+
+    if (team == Team.player){
+        self_pos = zlm.Vec2.new(800, -350);
+        enemy_pos = zlm.Vec2.new(-800, 390);
+
+        health_bar_pos = zlm.Vec2.new(450, -450);
+
+        health_bar =  game_sprite.getGlobal(.player_health_bar);
+        health_bar_fill = game_sprite.getGlobal(.player_health_bar_fill);
+
+        unit_getter = game_sprite.getPlayerUnit;
+    } else{
+        self_pos = zlm.Vec2.new(-800, 390);
+        enemy_pos = zlm.Vec2.new(800, -350);
+        
+        health_bar_pos = zlm.Vec2.new(-450, 490);
+
+        health_bar =  game_sprite.getGlobal(.enemy_health_bar);
+        health_bar_fill = game_sprite.getGlobal(.enemy_health_bar_fill);
+
+        unit_getter = game_sprite.getEnemyUnit;
+    }
+
+    const health_bar_complete = HealthBar.init(health_bar_pos, health_bar, health_bar_fill);
+
+
     return Self {
         .sprite = sprite,
         .swordman_clone = swordman_clone,
-        .health = health,
+        .health_bar = health_bar_complete,
+        .health_max = health,
+        .health_current = health,
         .damage = damage,
         .range = range,
         .attack_speed = attack_speed,
         .state = State.idle,
         .anims = anim,
-        .spawn_pos = spawn_pos,
+        .spawn_pos = self_pos,
         .enemy_pos = enemy_pos,
         .units_spawned = 0,
         .units = undefined,
@@ -69,6 +114,22 @@ pub fn init(allocator: *Allocator, sprite: *Sprite, unit_getter: fn(number: usiz
 pub fn setOpponent(self: *Self, castle: *Self) void {
     self.opponent = castle;
 }
+
+
+
+pub fn takeDamage(self: *Self, dmg: f32) void{
+    self.health_current -= dmg;
+
+    if (self.health_current <=0){
+        
+        
+        //self.die();
+    } else {
+        self.health_bar.setValue(self.health_current / self.health_max);
+    }
+}
+
+//fn die(self: Self) void{}
 
 pub fn setState(self: *Self, state: State) void {
     self.state = state;
