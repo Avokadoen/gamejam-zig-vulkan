@@ -47,6 +47,7 @@ units_spawned: u32,
 attack_speed: f32,
 
 unit_getter: fn(number: usize) *render2d.Sprite,
+team: Team,
 
 opponent: *Self,
 
@@ -112,6 +113,7 @@ pub fn init(allocator: *Allocator, sprite: *Sprite, swordman_clone: Unit, laser_
         .units_spawned = 0,
         .units = undefined,
         .unit_getter = unit_getter,
+        .team = team,
         .opponent = undefined,
         .rnd = rnd,
     };
@@ -129,8 +131,6 @@ pub fn takeDamage(self: *Self, dmg: f32) void{
         self.health_bar.setValue(self.health_current / self.health_max);
     }
 }
-
-//fn die(self: Self) void{}
 
 pub fn setState(self: *Self, state: State) void {
     self.state = state;
@@ -167,25 +167,30 @@ pub fn spawnUnit(self: *Self) !void{
         const x_offset = self.rnd.random().float(f32) * 100 - 50;
         const start = Vec2.new(self.spawn_pos.x + x_offset, self.spawn_pos.y + y_offset);
         const end   = Vec2.new(self.enemy_pos.x + x_offset, self.enemy_pos.y + y_offset);
-        if (self.rnd.random().float(f32) >= 0.5) {
-            var sprite = self.unit_getter(self.units_spawned);
-            sprite.setPosition(start);
-            sprite.setTexture(self.swordman_clone.anims[0].textures[0]);
 
-            self.units[self.units_spawned] = try self.swordman_clone.clone(sprite);
-            self.units[self.units_spawned].setMove(start, end);
+        var prototype = blk: {
+            if (self.rnd.random().float(f32) >= 0.5) {
+                break :blk self.swordman_clone;
+            } else {
+                break :blk self.laser_goblin_clone;
+            }
+        };
 
-            self.units_spawned += 1;
+        var sprite = self.unit_getter(self.units_spawned);
+        sprite.setPosition(start);
+        sprite.setTexture(prototype.anims[0].textures[0]);
+        if (self.team == .player) {
+            const size = prototype.sprite.getSize();
+            sprite.setSize(zlm.Vec2.new(-size.x, size.y));
         } else {
-            var sprite = self.unit_getter(self.units_spawned);
-            sprite.setPosition(start);
-            sprite.setTexture(self.laser_goblin_clone.anims[0].textures[0]);
-
-            self.units[self.units_spawned] = try self.laser_goblin_clone.clone(sprite);
-            self.units[self.units_spawned].setMove(start, end);
-
-            self.units_spawned += 1;
+            sprite.setSize(prototype.sprite.getSize());
         }
+
+        self.units[self.units_spawned] = try prototype.clone(sprite);
+        self.units[self.units_spawned].setMove(start, end);
+
+        self.units_spawned += 1;
+
     }
 }
 

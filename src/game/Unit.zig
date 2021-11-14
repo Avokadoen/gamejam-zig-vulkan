@@ -117,7 +117,6 @@ pub fn tick(self: *Self, delta_time: f32, opponent_castle: *Castle) void {
 }
 
 pub fn clone(self: Self, sprite: *Sprite) !Self {
-    sprite.setSize(self.sprite.getSize());
     const textures = [2][]const render2d.TextureHandle{ self.anims[0].textures, self.anims[1].textures };
     var uni: Self = try Self.init(self.allocator, sprite, self.health, self.damage, self.move_speed, self.range, self.attack_speed, textures);
 
