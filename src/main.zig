@@ -14,15 +14,19 @@ const input = @import("input.zig");
 const render2d = @import("render2d/render2d.zig");
 
 const game = @import("game/game.zig");
-const Anim = game.Anim;
-const Button = game.Button;
-const Move = game.Move;
-const Unit = game.Unit;
-const Castle = game.Castle;
+
 pub const application_name = "zig vulkan";
 
 // TODO: wrap this in render to make main seem simpler :^)
 var window: glfw.Window = undefined;
+
+var camera: render2d.Camera = undefined;
+var zoom_in  = false;
+var zoom_out = false;
+var move_up = false;
+var move_left = false;
+var move_right = false;
+var move_down = false;
 
 var delta_time: f64 = 0;
 
@@ -79,6 +83,9 @@ pub fn main() anyerror!void {
     };
     defer draw_api.deinit();
 
+    camera = draw_api.createCamera(400, 1.5);
+    var camera_translate = zlm.Vec2.zero;
+
     try game.initAllUnits(allocator);
     defer game.deinitUnits();
     
@@ -87,14 +94,45 @@ pub fn main() anyerror!void {
     
     try game.initGui(allocator);
     defer game.deinitGui();
-
+     
     var prev_frame = std.time.milliTimestamp();
     // Loop until the user closes the window
     while (!window.shouldClose()) {
         const current_frame = std.time.milliTimestamp();
         delta_time = @intToFloat(f64, current_frame - prev_frame) / @as(f64, std.time.ms_per_s);
+
+        const dt = @floatCast(f32, delta_time);
         
-        game.globalTick(@floatCast(f32, delta_time));
+        if (zoom_in) {
+            camera.zoomIn(dt);
+        }
+        if (zoom_out) {
+            camera.zoomOut(dt);
+        }
+
+        var call_translate = false;
+        if (move_up) {
+            camera_translate.y -= 1;
+            call_translate = true;
+        }
+        if (move_down) {
+            camera_translate.y += 1;
+            call_translate = true;
+        }
+        if (move_right) {
+            camera_translate.x += 1;
+            call_translate = true;
+        }
+        if (move_left) {
+            camera_translate.x -= 1;
+            call_translate = true;
+        }
+        if (call_translate) {
+            camera.translate(dt, camera_translate);
+            camera_translate = zlm.Vec2.zero;
+        }
+        
+        game.globalTick(dt);
 
         // Render here
         try draw_api.draw();
@@ -108,17 +146,40 @@ pub fn main() anyerror!void {
 fn keyInputFn(event: input.KeyEvent) void {
     if (event.action == .press) {
         switch(event.key) {
+            input.Key.w => move_up = true,
+            input.Key.s => move_down = true,
+            input.Key.d => move_left = true,
+            input.Key.a => move_right = true,
             input.Key.escape => window.setShouldClose(true) catch unreachable,
             else => { },
         }   
     } else if (event.action == .release) {
         switch(event.key) {
+            input.Key.w => move_up = false,
+            input.Key.s => move_down = false,
+            input.Key.d => move_left = false,
+            input.Key.a => move_right = false,
             else => { },
         }
     }   
 }
 
 fn mouseBtnInputFn(event: input.MouseButtonEvent) void {
+    if (event.action == input.Action.press) {
+        if (event.button == input.MouseButton.left) {   
+            zoom_in = true;    
+        } else if (event.button == input.MouseButton.right) {  
+            zoom_out = true;
+        }
+    }
+    if (event.action == input.Action.release) {
+        if (event.button == input.MouseButton.left) {   
+            zoom_in = false;    
+        } else if (event.button == input.MouseButton.right) {  
+            zoom_out = false;
+        }
+    }
+
     game.mouseBtnInputFn(event);
 }
 
