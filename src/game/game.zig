@@ -17,8 +17,7 @@ const sprite = @import("sprite.zig");
 var buttons: ArrayList(Button) = undefined;
 var hover_button: ?Button = null;
 
-var unit_move: Move = undefined;
-var unit_swordman: Unit = undefined;
+var swordman_prototype: Unit = undefined;
 
 var player_castle: Castle = undefined;
 var enemy_castle: Castle = undefined;
@@ -43,13 +42,12 @@ pub fn initAllUnits(allocator: *Allocator) !void {
     // create a test unit for now
     const anim_move = [_]render2d.TextureHandle{ texture.get(.unit0), texture.get(.unit1)};
     const anim_attack = [_]render2d.TextureHandle{ texture.get(.unit0), texture.get(.unit2)};
-    unit_swordman = try Unit.init(
+    swordman_prototype = try Unit.init(
         allocator, 
         sprite.getGlobal(.sword_man_prototype), 
         100, 25, 100, 50, 0.5, 
         [2][]const render2d.TextureHandle{&anim_move, &anim_attack}
     );
-    unit_swordman.setMove(Vec2.new(400, 200), Vec2.new(-400, -200));
 }
 
 /// caller must make sure to call deinitCastles
@@ -60,15 +58,23 @@ pub fn initCastles(allocator: *Allocator) !void {
     player_castle = try Castle.init(
         allocator,
         sprite.getGlobal(.player_castle),
+        sprite.getPlayerUnit,
+        swordman_prototype,
         2000, 300, 200, 1.5,
-        [2][]const render2d.TextureHandle{&caste_anim_idle, &caste_anim_attack}
+        [2][]const render2d.TextureHandle{&caste_anim_idle, &caste_anim_attack},
+        Vec2.new(800, -350),
+        Vec2.new(-800, 390)
     );
 
     enemy_castle = try Castle.init(
         allocator,
         sprite.getGlobal(.enemy_castle),
+        sprite.getEnemyUnit,
+        swordman_prototype,
         2000, 300, 200, 1.5,
-        [2][]const render2d.TextureHandle{&caste_anim_idle, &caste_anim_attack}
+        [2][]const render2d.TextureHandle{&caste_anim_idle, &caste_anim_attack},
+        Vec2.new(-800, 390),
+        Vec2.new(800, -350)
     );
 }
 
@@ -88,7 +94,10 @@ pub fn initGui(allocator: *Allocator) !void {
 pub fn globalTick(delta_time: f32) void {
     player_castle.tick(delta_time);
     enemy_castle.tick(delta_time);
-    unit_swordman.tick(delta_time);
+    swordman_prototype.tick(delta_time);
+
+    enemy_castle.spawnUnit() catch {};
+    player_castle.spawnUnit() catch {};
 }
 
 
@@ -100,7 +109,7 @@ pub fn deinitCastles() void {
 }
 
 pub fn deinitUnits() void {
-    unit_swordman.deinit();
+    swordman_prototype.deinit();
 }
 
 pub fn deinitGui() void {

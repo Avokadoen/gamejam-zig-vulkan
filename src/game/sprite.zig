@@ -15,12 +15,11 @@ pub const Sprites = enum {
     enemy_sprite,
 };
 
-const player_sprite_count: usize = 1000;
-const enemy_sprite_count: usize = 1000;
+pub const team_size: usize = 5000;
 
 const sprite_count = blk: {
     const global_count = @typeInfo(Sprites).Enum.fields.len;
-    break :blk (global_count - 2) + player_sprite_count + enemy_sprite_count;
+    break :blk (global_count - 2) + team_size * 2;
 };
 
 var sprites: [sprite_count]render2d.Sprite = undefined; 
@@ -78,7 +77,7 @@ pub inline fn createAllSprites(api: *render2d.InitializedApi, w_width: f32, w_he
 
     {
         var i: usize = 0;
-        while (i < player_sprite_count) : (i += 1) {
+        while (i < team_size) : (i += 1) {
             getPlayerUnit(i).* = try api.createSprite(
                 texture.get(.unit0), 
                 Vec2.new(-20000, 0), 
@@ -93,7 +92,7 @@ pub inline fn createAllSprites(api: *render2d.InitializedApi, w_width: f32, w_he
 
     {
         var i: usize = 0;
-        while (i < enemy_sprite_count) : (i += 1) {
+        while (i < team_size) : (i += 1) {
             getEnemyUnit(i).* = try api.createSprite(
                 texture.get(.unit0), 
                 Vec2.new(-20000, 0), 
@@ -118,10 +117,10 @@ pub inline fn getGlobal(comptime sprite: Sprites) *render2d.Sprite {
     }
 }
 
-pub inline fn getPlayerUnit(number: usize) *render2d.Sprite {
+pub fn getPlayerUnit(number: usize) *render2d.Sprite {
     return &sprites[@enumToInt(Sprites.player_sprite) + number];
 }
 
-pub inline fn getEnemyUnit(number: usize) *render2d.Sprite {
+pub fn getEnemyUnit(number: usize) *render2d.Sprite {
     return &sprites[@enumToInt(Sprites.enemy_sprite) + number];
 }
