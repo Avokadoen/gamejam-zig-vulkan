@@ -4,6 +4,17 @@ A game written in ~1 day using zig and vulkan
 
 Fork of [zig_vulkan](https://github.com/Avokadoen/zig_vulkan)
 
+# Build
+
+Download latest zig (tested on 0.9.0-dev.1622+71388b980)
+
+```bash
+$ git clone https://github.com/Avokadoen/gamejam-zig-vulkan.git
+$ cd ./gamejam-zig-vulkan
+$ git submodule init
+$ git submodule update
+$ zig build run 
+```
 
 # Result
 
