@@ -129,8 +129,8 @@ pub inline fn createAllSprites(api: *render2d.InitializedApi, w_width: f32, w_he
         Vec2.new(-20000, 0), 
         0, 
         Vec2.new(
-            texture.get(.laser_goblin_move0).width * 4, 
-            texture.get(.laser_goblin_move0).height * 4
+            texture.get(.laser_goblin_move0).width * 1, 
+            texture.get(.laser_goblin_move0).height * 1
         )
     );
 

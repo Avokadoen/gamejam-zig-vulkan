@@ -191,11 +191,18 @@ pub fn spawnUnit(self: *Self) !void{
         const x_offset = self.rnd.random().float(f32) * 100 - 50;
         const start = Vec2.new(self.spawn_pos.x + x_offset, self.spawn_pos.y + y_offset);
         const end   = Vec2.new(self.enemy_pos.x + x_offset, self.enemy_pos.y + y_offset);
+        if (self.rnd.random().float(f32) >= 0.5) {
+            self.units[self.units_spawned] = try self.swordman_clone.clone(self.unit_getter(self.units_spawned));
+            self.units[self.units_spawned].setMove(start, end);
+            self.units_spawned += 1;
+            self.highest_spawned = std.math.max(self.highest_spawned, self.units_spawned);
+        } else {
+            self.units[self.units_spawned] = try self.laser_goblin_clone.clone(self.unit_getter(self.units_spawned));
+            self.units[self.units_spawned].setMove(start, end);
+            self.units_spawned += 1;
+            self.highest_spawned = std.math.max(self.highest_spawned, self.units_spawned);
+        }
 
-        self.units[self.units_spawned] = try self.swordman_clone.clone(self.unit_getter(self.units_spawned));
-        self.units[self.units_spawned].setMove(start, end);
-        self.units_spawned += 1;
-        self.highest_spawned = std.math.max(self.highest_spawned, self.units_spawned);
     }
 }
 

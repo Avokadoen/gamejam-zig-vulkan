@@ -51,7 +51,7 @@ pub fn initAllUnits(allocator: *Allocator) !void {
     );
 
     const laser_goblin_anim_move = [_]render2d.TextureHandle{ texture.get(.laser_goblin_move0), texture.get(.laser_goblin_move1)};
-    const laser_goblin_anim_attack = [_]render2d.TextureHandle{ texture.get(.laser_goblin_attack0), texture.get(.laser_goblin_attack1), texture.get(.laser_goblin_attack1)};
+    const laser_goblin_anim_attack = [_]render2d.TextureHandle{ texture.get(.laser_goblin_attack0), texture.get(.laser_goblin_attack1), texture.get(.laser_goblin_attack2)};
 
     laser_goblin_prototype = try Unit.init(
         allocator, 
