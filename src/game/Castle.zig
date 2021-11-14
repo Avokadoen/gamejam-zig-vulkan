@@ -27,6 +27,7 @@ pub const Team = enum {
 
 sprite: *Sprite,
 swordman_clone: Unit,
+laser_goblin_clone: Unit,
 units: [game_sprite.team_size]Unit,
 health_bar: HealthBar,
 
@@ -51,7 +52,7 @@ opponent: *Self,
 
 rnd: Rnd,
 
-pub fn init(allocator: *Allocator, sprite: *Sprite, swordman_clone: Unit, health: f32, damage: f32, range: i32, attack_speed: f32, textures: [2][]const render2d.TextureHandle, team: Team) !Self {
+pub fn init(allocator: *Allocator, sprite: *Sprite, swordman_clone: Unit, laser_goblin_clone: Unit, health: f32, damage: f32, range: i32, attack_speed: f32, textures: [2][]const render2d.TextureHandle, team: Team) !Self {
     var anim: [2]Anim = undefined;
     anim[0] = try Anim.init(allocator, sprite, textures[0], 1);
     errdefer anim[0].deinit();
@@ -97,6 +98,7 @@ pub fn init(allocator: *Allocator, sprite: *Sprite, swordman_clone: Unit, health
     return Self {
         .sprite = sprite,
         .swordman_clone = swordman_clone,
+        .laser_goblin_clone = laser_goblin_clone,
         .health_bar = health_bar_complete,
         .health_max = health,
         .health_current = health,
@@ -165,15 +167,25 @@ pub fn spawnUnit(self: *Self) !void{
         const x_offset = self.rnd.random().float(f32) * 100 - 50;
         const start = Vec2.new(self.spawn_pos.x + x_offset, self.spawn_pos.y + y_offset);
         const end   = Vec2.new(self.enemy_pos.x + x_offset, self.enemy_pos.y + y_offset);
+        if (self.rnd.random().float(f32) >= 0.5) {
+            var sprite = self.unit_getter(self.units_spawned);
+            sprite.setPosition(start);
+            sprite.setTexture(self.swordman_clone.anims[0].textures[0]);
 
-        var sprite = self.unit_getter(self.units_spawned);
-        sprite.setPosition(start);
-        sprite.setTexture(self.swordman_clone.anims[0].textures[0]);
+            self.units[self.units_spawned] = try self.swordman_clone.clone(sprite);
+            self.units[self.units_spawned].setMove(start, end);
 
-        self.units[self.units_spawned] = try self.swordman_clone.clone(sprite);
-        self.units[self.units_spawned].setMove(start, end);
+            self.units_spawned += 1;
+        } else {
+            var sprite = self.unit_getter(self.units_spawned);
+            sprite.setPosition(start);
+            sprite.setTexture(self.laser_goblin_clone.anims[0].textures[0]);
 
-        self.units_spawned += 1;
+            self.units[self.units_spawned] = try self.laser_goblin_clone.clone(sprite);
+            self.units[self.units_spawned].setMove(start, end);
+
+            self.units_spawned += 1;
+        }
     }
 }
 

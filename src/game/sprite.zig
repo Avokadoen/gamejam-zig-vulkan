@@ -11,6 +11,7 @@ pub const Sprites = enum {
     enemy_castle,
     spawn_btn,
     sword_man_prototype,
+    laser_goblin_prototype,
     player_health_bar,
     player_health_bar_fill,
     enemy_health_bar,
@@ -114,25 +115,35 @@ pub inline fn createAllSprites(api: *render2d.InitializedApi, w_width: f32, w_he
     );
 
     getGlobal(.sword_man_prototype).* = try api.createSprite(
-        texture.get(.unit0), 
+        texture.get(.sword_man_idle), 
         Vec2.new(-20000, 0), 
         0, 
         Vec2.new(
-            texture.get(.unit0).width * 0.5, 
-            texture.get(.unit0).height * 0.5
+            texture.get(.sword_man_idle).width * 0.5, 
+            texture.get(.sword_man_idle).height * 0.5
         )
     ); 
+
+    getGlobal(.laser_goblin_prototype).* = try api.createSprite(
+        texture.get(.laser_goblin_move0), 
+        Vec2.new(-20000, 0), 
+        0, 
+        Vec2.new(
+            texture.get(.laser_goblin_move0).width * 1, 
+            texture.get(.laser_goblin_move0).height * 1
+        )
+    );
 
     {
         var i: usize = 0;
         while (i < team_size) : (i += 1) {
             getPlayerUnit(i).* = try api.createSprite(
-                texture.get(.unit0), 
+                texture.get(.sword_man_idle), 
                 Vec2.new(-20000, 0), 
                 0, 
                 Vec2.new(
-                    -texture.get(.unit0).width * 0.5, 
-                    texture.get(.unit0).height * 0.5
+                    -texture.get(.sword_man_idle).width * 0.5, 
+                    texture.get(.sword_man_idle).height * 0.5
                 )
             ); 
         }
@@ -142,12 +153,12 @@ pub inline fn createAllSprites(api: *render2d.InitializedApi, w_width: f32, w_he
         var i: usize = 0;
         while (i < team_size) : (i += 1) {
             getEnemyUnit(i).* = try api.createSprite(
-                texture.get(.unit0), 
+                texture.get(.sword_man_idle), 
                 Vec2.new(-20000, 0), 
                 0, 
                 Vec2.new(
-                    texture.get(.unit0).width * 0.5, 
-                    texture.get(.unit0).height * 0.5
+                    texture.get(.sword_man_idle).width * 0.5, 
+                    texture.get(.sword_man_idle).height * 0.5
                 )
             ); 
         }

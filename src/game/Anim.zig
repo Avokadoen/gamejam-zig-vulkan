@@ -23,6 +23,9 @@ pub fn init(allocator: *Allocator, sprite: *Sprite, textures: []const TextureHan
     var alloc_textures = try allocator.alloc(TextureHandle, textures.len);
     std.mem.copy(TextureHandle, alloc_textures, textures);
 
+    //force update texture
+    sprite.setTexture(alloc_textures[0]);
+
     return Self {
         .allocator = allocator,
         .sprite = sprite,
