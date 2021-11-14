@@ -20,6 +20,7 @@ pub const State = enum(usize) {
 sprite: *Sprite,
 swordman_clone: Unit,
 units: [game_sprite.team_size]Unit,
+outer_unit: usize,
 
 spawn_pos: zlm.Vec2,
 enemy_pos: zlm.Vec2,
@@ -36,6 +37,8 @@ units_spawned: u32,
 attack_speed: f32,
 
 unit_getter: fn(number: usize) *render2d.Sprite,
+
+opponent: *Self,
 
 pub fn init(allocator: *Allocator, sprite: *Sprite, unit_getter: fn(number: usize) *render2d.Sprite, swordman_clone: Unit, health: i32, damage: i32, range: i32, attack_speed: f32, textures: [2][]const render2d.TextureHandle, spawn_pos: zlm.Vec2, enemy_pos: zlm.Vec2) !Self {
     var anim: [2]Anim = undefined;
@@ -57,21 +60,46 @@ pub fn init(allocator: *Allocator, sprite: *Sprite, unit_getter: fn(number: usiz
         .enemy_pos = enemy_pos,
         .units_spawned = 0,
         .units = undefined,
+        .outer_unit = 0,
         .unit_getter = unit_getter,
+        .opponent = undefined,
     };
+}
+
+pub fn setOpponent(self: *Self, castle: *Self) void {
+    self.opponent = castle;
 }
 
 pub fn setState(self: *Self, state: State) void {
     self.state = state;
 }
 
+pub fn getOuterUnit(self: *Self) *Unit {
+    return &self.units[self.outer_unit];
+}
+
 pub fn tick(self: *Self, delta_time: f32) void{
     self.anims[@enumToInt(self.state)].tick(delta_time);
 
+    if (self.units_spawned == 0) return;
     {
+        const castle_pos = self.sprite.getPosition();
+        var outer_distance = self.units[self.outer_unit].sprite.getPosition().sub(castle_pos).length2();
+
         var i:u32 = 0;
         while (i < self.units_spawned) : (i += 1) {
-            self.units[i].tick(delta_time);
+            self.units[i].tick(delta_time, self.opponent.getOuterUnit());
+
+            if (i == self.outer_unit) {
+                continue;
+            }
+
+            const position = self.units[i].sprite.getPosition();
+            const distance = position.sub(castle_pos).length2();
+            if (distance > outer_distance) {
+                self.outer_unit = i;
+                outer_distance = distance; 
+            }
         }
     }
 }

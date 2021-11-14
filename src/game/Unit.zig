@@ -26,11 +26,11 @@ move: ?Move,
 health: i32,
 damage: i32,
 move_speed: f32,
-range: i32,
+range: f32,
 
 attack_speed: f32,
 
-pub fn init(allocator: *Allocator, sprite: *Sprite, health: i32, damage: i32, move_speed: f32, range: i32, attack_speed: f32, textures: [2][]const render2d.TextureHandle) !Self {
+pub fn init(allocator: *Allocator, sprite: *Sprite, health: i32, damage: i32, move_speed: f32, range: f32, attack_speed: f32, textures: [2][]const render2d.TextureHandle) !Self {
     var anim: [2]Anim = undefined;
     anim[0] = try Anim.init(allocator, sprite, textures[0], 1);
     errdefer anim[0].deinit();
@@ -59,12 +59,19 @@ pub fn setMove(self: *Self, start: zlm.Vec2, end: zlm.Vec2) void {
     self.move = Move.init(self.sprite, start, end, self.move_speed);
 }
 
-pub fn tick(self: *Self, delta_time: f32) void {
+pub fn tick(self: *Self, delta_time: f32, closest_opponent: *Self) void {
     self.anims[@enumToInt(self.state)].tick(delta_time);
 
     if (self.state == .moving) {
         if (self.move) |*some| {
             some.tick(delta_time);
+        }
+
+        const opponent_pos = closest_opponent.sprite.getPosition();
+        const position = self.sprite.getPosition();
+        const distance = opponent_pos.sub(position).length2();
+        if (distance < self.range) {
+            self.state = .attacking;
         }
     }
 }

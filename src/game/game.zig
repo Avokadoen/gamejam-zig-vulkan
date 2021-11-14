@@ -76,6 +76,9 @@ pub fn initCastles(allocator: *Allocator) !void {
         Vec2.new(-800, 390),
         Vec2.new(800, -350)
     );
+
+    player_castle.setOpponent(&enemy_castle);
+    enemy_castle.setOpponent(&player_castle);
 }
 
 /// caller must make sure to calle deinitGui
