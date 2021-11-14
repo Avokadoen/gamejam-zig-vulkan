@@ -18,7 +18,7 @@ const Anim = game.Anim;
 const Button = game.Button;
 const Move = game.Move;
 const Unit = game.Unit;
-
+const Castle = game.Castle;
 pub const application_name = "zig vulkan";
 
 // TODO: wrap this in render to make main seem simpler :^)
@@ -71,9 +71,6 @@ pub fn main() anyerror!void {
     // _ = window.setFramebufferSizeCallback(framebufferSizeCallbackFn);
     // defer _ = window.setFramebufferSizeCallback(null);
 
-    // const comp_pipeline = try renderer.ComputePipeline.init(allocator, ctx, "../../comp.comp.spv", &subo.ubo.my_texture);
-    // defer comp_pipeline.deinit(ctx);
-
     // init input module with iput handler functions
     try input.init(window, keyInputFn, mouseBtnInputFn, cursorPosInputFn);
     defer input.deinit();
@@ -81,12 +78,15 @@ pub fn main() anyerror!void {
     var texture_handles: [8]render2d.TextureHandle = undefined;
     var sprites: [5]render2d.Sprite = undefined; 
 
-
     var castle_anim: Anim = undefined;
     defer castle_anim.deinit();
 
     var unit_move: Move = undefined;
     var unit_swordman: Unit = undefined;
+
+    var unit_player_castle: Castle = undefined;
+    var unit_enemy_castle: Castle = undefined;
+    
 
     var draw_api = blk: {
         var init_api = try render2d.init(allocator, ctx, 25);
@@ -153,7 +153,7 @@ pub fn main() anyerror!void {
         unit_swordman = try Unit.init(
             allocator, 
             &sprites[3], 
-            100, 10, 100, 50, 2, 
+            100, 10, 100, 50, 0.5, 
             [2][]const render2d.TextureHandle{&anim_move, &anim_attack}, 
             unit_move
         );
@@ -169,9 +169,31 @@ pub fn main() anyerror!void {
             )
         );
         try buttons.append(Button.init(&sprites[4], texture_handles[6], texture_handles[7], btnCallback));
+        
+        const caste_anim_idle = [_]render2d.TextureHandle{texture_handles[4]};
+        const caste_anim_attack = [_]render2d.TextureHandle{texture_handles[5]};
+
+        unit_player_castle = try Castle.init(
+            allocator,
+            &sprites[1],
+            2000, 300, 200, 1.5,
+            [2][]const render2d.TextureHandle{&caste_anim_idle, &caste_anim_attack}
+        );
+
+        unit_enemy_castle = try Castle.init(
+            allocator,
+            &sprites[2],
+            2000, 300, 200, 1.5,
+            [2][]const render2d.TextureHandle{&caste_anim_idle, &caste_anim_attack}
+        );
+
+        unit_enemy_castle.setState(.spawning);
+
 
         break :blk try init_api.initDrawApi(.{ .every_ms = 14 });
     };
+    defer unit_enemy_castle.deinit();
+    defer unit_player_castle.deinit();
     defer unit_swordman.deinit();
     defer draw_api.deinit();
 
@@ -183,7 +205,10 @@ pub fn main() anyerror!void {
         // f32 variant of delta_time
         const dt = @floatCast(f32, delta_time);
         
-        castle_anim.tick(dt);
+        //castle_anim.tick(dt);
+
+        unit_player_castle.tick(dt);
+        unit_enemy_castle.tick(dt);
         unit_swordman.tick(dt);
 
         // Render here
