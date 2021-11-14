@@ -12,11 +12,10 @@ const Vec2 = @import("zlm").Vec2;
 const render2d = @import("../render2d/render2d.zig");
 const input = @import("../input.zig");
 const texture = @import("texture.zig"); 
+const sprite = @import("sprite.zig");
 
 var buttons: ArrayList(Button) = undefined;
 var hover_button: ?Button = null;
-
-var sprites: [5]render2d.Sprite = undefined; 
 
 var unit_move: Move = undefined;
 var unit_swordman: Unit = undefined;
@@ -36,56 +35,7 @@ pub const loadAllTextures = texture.loadAllTextures;
 pub fn createAllSprites(api: *render2d.InitializedApi, w_width: f32, w_height: f32) !void {
     window_width = w_width;
     window_height = w_height;
-
-    // create map background sprite
-    sprites[0] = try api.createSprite(
-        texture.get(.map), 
-        Vec2.new(0, 0), 
-        0, 
-        Vec2.new(window_width, window_height)
-    );
-
-    // create enemy castle sprite
-    sprites[1] = try api.createSprite(
-        texture.get(.castle_idle), 
-        Vec2.new(-800, 390), 
-        0, 
-        Vec2.new(
-            texture.get(.castle_idle).width * 2, 
-            texture.get(.castle_idle).height * 2
-        )
-    );
-
-    // create player castle sprite
-    sprites[2] = try api.createSprite(
-        texture.get(.castle_idle), 
-        Vec2.new(800, -350), 
-        0, 
-        Vec2.new(
-            texture.get(.castle_idle).width * 2, 
-            texture.get(.castle_idle).height * 2
-        )
-    );
-
-    sprites[3] = try api.createSprite(
-        texture.get(.unit0), 
-        Vec2.new(-200, 0), 
-        0, 
-        Vec2.new(
-            texture.get(.unit0).width * 4, 
-            texture.get(.unit0).height * 4
-        )
-    );
-
-    sprites[4] = try api.createSprite(
-        texture.get(.btn_idle), 
-        Vec2.new(0, 0), 
-        0, 
-        Vec2.new(
-            texture.get(.btn_idle).width * 4, 
-            texture.get(.btn_idle).height * 4
-        )
-    );
+    try sprite.createAllSprites(api, w_width, w_height);
 }
 
 /// caller must make sure to call deinitUnits
@@ -95,7 +45,7 @@ pub fn initAllUnits(allocator: *Allocator) !void {
     const anim_attack = [_]render2d.TextureHandle{ texture.get(.unit0), texture.get(.unit2)};
     unit_swordman = try Unit.init(
         allocator, 
-        &sprites[3], 
+        sprite.getGlobal(.sword_man_prototype), 
         100, 25, 100, 50, 0.5, 
         [2][]const render2d.TextureHandle{&anim_move, &anim_attack}
     );
@@ -109,14 +59,14 @@ pub fn initCastles(allocator: *Allocator) !void {
 
     player_castle = try Castle.init(
         allocator,
-        &sprites[1],
+        sprite.getGlobal(.player_castle),
         2000, 300, 200, 1.5,
         [2][]const render2d.TextureHandle{&caste_anim_idle, &caste_anim_attack}
     );
 
     enemy_castle = try Castle.init(
         allocator,
-        &sprites[2],
+        sprite.getGlobal(.enemy_castle),
         2000, 300, 200, 1.5,
         [2][]const render2d.TextureHandle{&caste_anim_idle, &caste_anim_attack}
     );
@@ -125,7 +75,12 @@ pub fn initCastles(allocator: *Allocator) !void {
 /// caller must make sure to calle deinitGui
 pub fn initGui(allocator: *Allocator) !void {
     buttons = ArrayList(Button).init(allocator);
-    try buttons.append(Button.init(&sprites[4], texture.get(.btn_idle), texture.get(.btn_click), btnCallback));
+    try buttons.append(Button.init(
+        sprite.getGlobal(.spawn_btn), 
+        texture.get(.btn_idle), 
+        texture.get(.btn_click), 
+        btnCallback
+    ));
 }
 
 // --------------- TICK ------------------------------------------ //
