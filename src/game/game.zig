@@ -71,7 +71,7 @@ pub fn createAllSprites(api: *render2d.InitializedApi, w_width: f32, w_height: f
 
     sprites[3] = try api.createSprite(
         texture.get(.unit0), 
-        Vec2.new(-200, 0), 
+        Vec2.new(-20000, 0), 
         0, 
         Vec2.new(
             texture.get(.unit0).width * 4, 
@@ -95,7 +95,7 @@ pub fn createAllSprites(api: *render2d.InitializedApi, w_width: f32, w_height: f
 
             player_sprites[i] = try api.createSprite(
                 texture.get(.unit0), 
-                Vec2.new(-200, 0), 
+                Vec2.new(-20000, 0), 
                 0, 
                 Vec2.new(
                     texture.get(.unit0).width * 0.5, 
@@ -105,7 +105,7 @@ pub fn createAllSprites(api: *render2d.InitializedApi, w_width: f32, w_height: f
 
             enemy_sprites[i] = try api.createSprite(
                 texture.get(.unit0), 
-                Vec2.new(-200, 0), 
+                Vec2.new(-20000, 0), 
                 0, 
                 Vec2.new(
                     texture.get(.unit0).width * 0.5, 
