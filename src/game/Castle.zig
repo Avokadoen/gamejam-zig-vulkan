@@ -43,6 +43,7 @@ health_current: f32,
 damage: i32,
 range: i32,
 units_spawned: u32,
+highest_spawned: u32,
 
 attack_speed: f32,
 
@@ -109,6 +110,7 @@ pub fn init(allocator: *Allocator, sprite: *Sprite, swordman_clone: Unit, health
         .spawn_pos = self_pos,
         .enemy_pos = enemy_pos,
         .units_spawned = 0,
+        .highest_spawned = 0,
         .units = undefined,
         .outer_unit = 0,
         .unit_getter = unit_getter,
@@ -153,6 +155,18 @@ pub fn tick(self: *Self, delta_time: f32) void{
 
         var i:u32 = 0;
         while (i < self.units_spawned) : (i += 1) {
+            if (self.units[i].state == .dead) {
+                self.units_spawned -= 1;
+                if (self.units_spawned == 0) {
+                    break;
+                } else if (i == self.units_spawned) {
+                    std.mem.swap(Unit, &self.units[i], &self.units[0]);
+                    continue;
+                } else {
+                    std.mem.swap(Unit, &self.units[i], &self.units[self.units_spawned]);
+                }
+            }
+
             self.units[i].tick(delta_time, self.opponent.getOuterUnit());
 
             if (i == self.outer_unit) {
@@ -179,6 +193,7 @@ pub fn spawnUnit(self: *Self) !void{
         self.units[self.units_spawned] = try self.swordman_clone.clone(self.unit_getter(self.units_spawned));
         self.units[self.units_spawned].setMove(start, end);
         self.units_spawned += 1;
+        self.highest_spawned = std.math.max(self.highest_spawned, self.units_spawned);
     }
 }
 
@@ -187,7 +202,7 @@ pub fn deinit(self: Self) void {
     self.anims[1].deinit();
     {   
         var i:u32 = 0;
-        while (i < self.units_spawned) : (i += 1) {
+        while (i < self.highest_spawned) : (i += 1) {
             self.units[i].deinit();
         }
     }
