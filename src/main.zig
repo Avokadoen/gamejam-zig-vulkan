@@ -23,13 +23,8 @@ pub const application_name = "zig vulkan";
 
 // TODO: wrap this in render to make main seem simpler :^)
 var window: glfw.Window = undefined;
-var window_width: f32 = undefined;
-var window_height: f32 = undefined;
 
 var delta_time: f64 = 0;
-
-var buttons: ArrayList(Button) = undefined;
-var hover_button: ?Button = null;
 
 pub fn main() anyerror!void {
     const stderr = std.io.getStdErr().writer();
@@ -44,8 +39,6 @@ pub fn main() anyerror!void {
         }
     }
     const allocator = if (consts.enable_validation_layers) &alloc.allocator else alloc;
-
-    buttons = ArrayList(Button).init(allocator);
     
     // Initialize the library *
     try glfw.init();
@@ -68,148 +61,40 @@ pub fn main() anyerror!void {
     const ctx = try render.Context.init(allocator, application_name, &window, null);
     defer ctx.deinit();
 
-    // _ = window.setFramebufferSizeCallback(framebufferSizeCallbackFn);
-    // defer _ = window.setFramebufferSizeCallback(null);
-
     // init input module with iput handler functions
     try input.init(window, keyInputFn, mouseBtnInputFn, cursorPosInputFn);
     defer input.deinit();
-
-    var texture_handles: [8]render2d.TextureHandle = undefined;
-    var sprites: [5]render2d.Sprite = undefined; 
-
-    var castle_anim: Anim = undefined;
-    defer castle_anim.deinit();
-
-    var unit_move: Move = undefined;
-    var unit_swordman: Unit = undefined;
-
-    var player_castle: Castle = undefined;
-    var enemy_castle: Castle = undefined;
     
-
     var draw_api = blk: {
         var init_api = try render2d.init(allocator, ctx, 25);
 
-        // load all textures that we will be using
-        texture_handles[0] = try init_api.loadTexture("../assets/images/units/unit0000.png"[0..]);
-        texture_handles[1] = try init_api.loadTexture("../assets/images/units/unit0001.png"[0..]);
-        texture_handles[2] = try init_api.loadTexture("../assets/images/units/unit0002.png"[0..]);
-
-        texture_handles[3] = try init_api.loadTexture("../assets/images/levels/map.png"[0..]);
-        texture_handles[4] = try init_api.loadTexture("../assets/images/structures/castle0000.png"[0..]);
-        texture_handles[5] = try init_api.loadTexture("../assets/images/structures/castle0001.png"[0..]);
-
-        texture_handles[6] = try init_api.loadTexture("../assets/images/gui/test_btn_idle.png"[0..]);
-        texture_handles[7] = try init_api.loadTexture("../assets/images/gui/test_btn_clicked.png"[0..]);
-
         const window_size = try window.getSize();
-        window_width = @intToFloat(f32, window_size.width);
-        window_height = @intToFloat(f32, window_size.height);
-     
-        // create map background sprite
-        sprites[0] = try init_api.createSprite(
-            texture_handles[3], 
-            zlm.Vec2.new(0, 0), 
-            0, 
-            zlm.Vec2.new(window_width, window_height)
-        );
+        const window_width = @intToFloat(f32, window_size.width);
+        const window_height = @intToFloat(f32, window_size.height);
 
-        // create enemy castle sprite
-        sprites[1] = try init_api.createSprite(
-            texture_handles[4], 
-            zlm.Vec2.new(-800, 390), 
-            0, 
-            zlm.Vec2.new(
-                texture_handles[4].width * 2, 
-                texture_handles[4].height * 2
-            )
-        );
-        castle_anim = try Anim.init(allocator, &sprites[1], &[_]render2d.TextureHandle{ texture_handles[4], texture_handles[5] }, 1);
-
-        // create player castle sprite
-        sprites[2] = try init_api.createSprite(
-            texture_handles[4], 
-            zlm.Vec2.new(800, -350), 
-            0, 
-            zlm.Vec2.new(
-                texture_handles[4].width * 2, 
-                texture_handles[4].height * 2
-            )
-        );
-
-        sprites[3] = try init_api.createSprite(
-            texture_handles[0], 
-            zlm.Vec2.new(-200, 0), 
-            0, 
-            zlm.Vec2.new(
-                texture_handles[4].width * 4, 
-                texture_handles[4].height * 4
-            )
-        );
-        const anim_move = [_]render2d.TextureHandle{ texture_handles[0], texture_handles[1]};
-        const anim_attack = [_]render2d.TextureHandle{ texture_handles[0], texture_handles[2]};
-        unit_move = Move.init(&sprites[3], zlm.Vec2.new( 400, 200), zlm.Vec2.new(-400, -200), 100);
-        unit_swordman = try Unit.init(
-            allocator, 
-            &sprites[3], 
-            100, 10, 100, 50, 0.5, 
-            [2][]const render2d.TextureHandle{&anim_move, &anim_attack}, 
-            unit_move
-        );
-        unit_swordman.setState(.attacking);
-
-        sprites[4] = try init_api.createSprite(
-            texture_handles[6], 
-            zlm.Vec2.new(0, 0), 
-            0, 
-            zlm.Vec2.new(
-                texture_handles[4].width * 4, 
-                texture_handles[4].height * 4
-            )
-        );
-        try buttons.append(Button.init(&sprites[4], texture_handles[6], texture_handles[7], btnCallback));
+        try game.loadAllTextures(&init_api);
+        try game.createAllSprites(&init_api, window_width, window_height);
         
-        const caste_anim_idle = [_]render2d.TextureHandle{texture_handles[4]};
-        const caste_anim_attack = [_]render2d.TextureHandle{texture_handles[5]};
-
-        player_castle = try Castle.init(
-            allocator,
-            &sprites[1],
-            2000, 300, 200, 1.5,
-            [2][]const render2d.TextureHandle{&caste_anim_idle, &caste_anim_attack}
-        );
-
-        enemy_castle = try Castle.init(
-            allocator,
-            &sprites[2],
-            2000, 300, 200, 1.5,
-            [2][]const render2d.TextureHandle{&caste_anim_idle, &caste_anim_attack}
-        );
-
-        enemy_castle.setState(.spawning);
-
-
         break :blk try init_api.initDrawApi(.{ .every_ms = 14 });
     };
-    defer enemy_castle.deinit();
-    defer player_castle.deinit();
-    defer unit_swordman.deinit();
     defer draw_api.deinit();
+
+    try game.initAllUnits(allocator);
+    defer game.deinitUnits();
+    
+    try game.initCastles(allocator);
+    defer game.deinitCastles();
+    
+    try game.initGui(allocator);
+    defer game.deinitGui();
 
     var prev_frame = std.time.milliTimestamp();
     // Loop until the user closes the window
     while (!window.shouldClose()) {
         const current_frame = std.time.milliTimestamp();
         delta_time = @intToFloat(f64, current_frame - prev_frame) / @as(f64, std.time.ms_per_s);
-        // f32 variant of delta_time
-        const dt = @floatCast(f32, delta_time);
         
-        //castle_anim.tick(dt);
-
-        player_castle.tick(dt);
-        enemy_castle.tick(dt);
-        unit_swordman.tick(dt);
+        game.globalTick(@floatCast(f32, delta_time));
 
         // Render here
         try draw_api.draw();
@@ -218,10 +103,6 @@ pub fn main() anyerror!void {
         try glfw.pollEvents();
         prev_frame = current_frame;
     }
-}
-
-fn btnCallback() void {
-    std.debug.print("hello from button!\n", .{});
 }
 
 fn keyInputFn(event: input.KeyEvent) void {
@@ -238,66 +119,10 @@ fn keyInputFn(event: input.KeyEvent) void {
 }
 
 fn mouseBtnInputFn(event: input.MouseButtonEvent) void {
-    if (event.button == .left) {
-        if (hover_button) |*some| {
-            if (event.action == .press) {
-                some.onClick();
-            } else if (event.action == .release) {
-                some.onRelease();
-            }
-        }
-    }
+    game.mouseBtnInputFn(event);
 }
 
 fn cursorPosInputFn(event: input.CursorPosEvent) void {
-    const vec_event = zlm.Vec2.new(
-        @floatCast(f32, event.x) - window_width * 0.5, 
-        @floatCast(f32, event.y) - window_height * 0.5
-    );
-
-    var prev_button = hover_button;
-    hover_button = null;
-
-    for (buttons.items) |button| {
-        if (button.bound.contains(vec_event)) {
-            hover_button = button;
-            break;
-        }
-    }
-
-    if (prev_button) |prev_some| {
-        if (hover_button) |new_some| {
-            if(prev_some.sprite.db_id.value == new_some.sprite.db_id.value) {
-                return;
-            }
-        }
-        prev_some.onRelease();
-    }
+    game.cursorPosInputFn(event);
 }
-
-// TODO: move to internal of pipeline
-// var sc_data: swapchain.Data = undefined;
-// var view: swapchain.ViewportScissor = undefined;
-
-// /// called by glfw to message pipelines about scaling
-// /// this should never be registered before pipeline init
-// fn framebufferSizeCallbackFn(_window: ?*glfw.RawWindow, width: c_int, height: c_int) callconv(.C) void {
-//     _ = _window;
-//     _ = width;
-//     _ = height;
-
-//     // recreate swapchain utilizing the old one 
-//     const old_swapchain = sc_data;
-//     sc_data = swapchain.Data.init(allocator, ctx, old_swapchain.swapchain) catch |err| {
-//         std.debug.panic("failed to resize swapchain, err {any}", .{err}) catch unreachable;
-//     };
-//     old_swapchain.deinit(ctx);
-
-//     // recreate view from swapchain extent
-//     view = swapchain.ViewportScissor.init(sc_data.extent);
-    
-//     gfx_pipeline.sc_data = &sc_data;
-//     gfx_pipeline.view = &view;
-//     gfx_pipeline.requested_rescale_pipeline = true;
-// }
 

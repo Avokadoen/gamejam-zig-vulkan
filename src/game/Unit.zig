@@ -20,17 +20,16 @@ sprite: *Sprite,
 state: State,
 
 anims: [2]Anim,
-move: Move,
+move: ?Move,
 
 health: i32,
 damage: i32,
-move_speed: i32,
+move_speed: f32,
 range: i32,
 
 attack_speed: f32,
 
-pub fn init(allocator: *Allocator, sprite: *Sprite, health: i32, damage: i32, move_speed: i32, range: i32, attack_speed: f32, textures: [2][]const render2d.TextureHandle, move: Move) !Self {
-    
+pub fn init(allocator: *Allocator, sprite: *Sprite, health: i32, damage: i32, move_speed: f32, range: i32, attack_speed: f32, textures: [2][]const render2d.TextureHandle) !Self {
     var anim: [2]Anim = undefined;
     anim[0] = try Anim.init(allocator, sprite, textures[0], 1);
     errdefer anim[0].deinit();
@@ -46,7 +45,7 @@ pub fn init(allocator: *Allocator, sprite: *Sprite, health: i32, damage: i32, mo
         .attack_speed = attack_speed,
         .state = State.moving,
         .anims = anim,
-        .move = move,
+        .move = null,
     };
 }
 
@@ -54,13 +53,18 @@ pub fn setState(self: *Self, state: State) void {
     self.state = state;
 }
 
+pub fn setMove(self: *Self, start: zlm.Vec2, end: zlm.Vec2) void {
+    self.move = Move.init(self.sprite, start, end, self.move_speed);
+}
+
 pub fn tick(self: *Self, delta_time: f32) void{
     self.anims[@enumToInt(self.state)].tick(delta_time);
-    if(self.state == .moving){
-        self.move.tick(delta_time);
-    }
-    
 
+    if(self.state == .moving){
+        if (self.move) |*some| {
+            some.tick(delta_time);
+        }
+    }
 }
 pub fn deinit(self: Self) void {
     self.anims[0].deinit();
