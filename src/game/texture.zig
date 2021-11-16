@@ -38,9 +38,9 @@ pub const TexturePath = std.ComptimeStringMap([]const u8, .{
     .{ "laser_goblin_attack1",  "../assets/images/units/LaserGoblin/Image20003.png" },
     .{ "laser_goblin_attack2",  "../assets/images/units/LaserGoblin/Image20004.png" },
 
-    .{ "map",                   "../assets/images/levels/map.png" },
-    .{ "castle_idle",           "../assets/images/structures/castle0000.png" },
-    .{ "castle_spawn",          "../assets/images/structures/castle0001.png" },
+    .{ "map",                   "../assets/images/Levels/Map.png" },
+    .{ "castle_idle",           "../assets/images/Structures/Castle0000.png" },
+    .{ "castle_spawn",          "../assets/images/Structures/Castle0001.png" },
 
     .{ "btn_idle",              "../assets/images/gui/test_btn_idle.png" },
     .{ "btn_click",             "../assets/images/gui/test_btn_clicked.png" },
