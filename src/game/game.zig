@@ -107,7 +107,7 @@ pub fn initGui(allocator: *Allocator) !void {
 
 // --------------- TICK ------------------------------------------ //
 
-var spawn_rate: f32 = 0.1;
+var spawn_rate: f32 = 0.03;
 var last_spawn: f32 = 0;
 pub fn globalTick(delta_time: f32) void {
     player_castle.tick(delta_time);
@@ -117,7 +117,7 @@ pub fn globalTick(delta_time: f32) void {
     if (last_spawn >= spawn_rate) {
         player_castle.spawnUnit() catch {};
         enemy_castle.spawnUnit() catch {};
-        last_spawn = 0;
+        last_spawn -= spawn_rate;
     }    
 }
 

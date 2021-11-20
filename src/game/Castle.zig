@@ -247,15 +247,6 @@ pub fn spawnUnit(self: *Castle) !void{
 }
 
 pub fn deinit(self: Castle) void {
-    self.anims[0].deinit();
-    self.anims[1].deinit();
-    {   
-        var i: u32 = 0;
-        while (i < self.units_spawned) : (i += 1) {
-            self.units[i].deinit();
-        }
-    }
-
     for (self.work_ctx) |*ctx, i| {
         { // critical zone
             ctx.mtx.lock();
@@ -272,8 +263,18 @@ pub fn deinit(self: Castle) void {
             ctx.tick_event.deinit();
         }
     }
+    
     self.allocator.free(self.workers);
     self.allocator.free(self.work_ctx);
+
+    self.anims[0].deinit();
+    self.anims[1].deinit();
+    {   
+        var i: u32 = 0;
+        while (i < self.units_spawned) : (i += 1) {
+            self.units[i].deinit();
+        }
+    }
 }
 
 const WorkCtx = struct {
