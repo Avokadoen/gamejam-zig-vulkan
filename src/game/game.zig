@@ -143,8 +143,7 @@ pub fn deinitGui() void {
 // ---------------- INPUT HANDLING -------------------------------- //
 
 fn btnCallback() void {
-    player_castle.spawnUnit() catch {};
-    enemy_castle.spawnUnit() catch {};
+    std.debug.print("player has: {d} units\nenemy has: {d} units\n", .{ player_castle.units_spawned, enemy_castle.units_spawned});
 }
 
 /// extend main's mouse button input handling
