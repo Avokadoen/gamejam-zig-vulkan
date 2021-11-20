@@ -35,7 +35,7 @@ attack_speed: f32,
 last_attack: f32 = 0,
 
 pub fn init(allocator: *Allocator, sprite: *Sprite, walk_update_rate: f32, health: f32, damage: f32, move_speed: f32, range: f32, attack_speed: f32, textures: [2][]const render2d.TextureHandle) !Self {
-    // std.debug.print("start pos: {d} {d} {d}\n", .{sprite.db_id, sprite.getPosition().x, sprite.getPosition().y});
+
     var anim: [2]Anim = undefined;
     anim[0] = try Anim.init(allocator, sprite, textures[0], walk_update_rate);
     errdefer anim[0].deinit();
@@ -73,8 +73,8 @@ fn bruteForceRangeCheck(self: *Self, opponent_castle: *Castle) ?*Self {
         var i: usize = 0;
         while (i < opponent_castle.units_spawned) : (i += 1) {
             const target_pos = opponent_castle.units[i].sprite.getPosition();
-            const delta = target_pos.x - self_pos.x;
-            if (std.math.absFloat(delta) < self.range) {
+            const distance = target_pos.sub(self_pos).length2();
+            if (std.math.fabs(distance) < self.range) {
                 return &opponent_castle.units[i];
             }
         }
@@ -85,8 +85,8 @@ fn bruteForceRangeCheck(self: *Self, opponent_castle: *Castle) ?*Self {
 fn castleRange(self: *Self, opponent_castle: *Castle) bool {
     const self_pos = self.sprite.getPosition();
     const target_pos = opponent_castle.sprite.getPosition().add(opponent_castle.sprite.getSize().scale(0.25));
-    const delta = target_pos.x - self_pos.x;
-    if (std.math.absFloat(delta) < self.range) {
+    const distance = target_pos.sub(self_pos).length2();
+    if (std.math.fabs(distance) < self.range) {
         return true;
     }
     return false;

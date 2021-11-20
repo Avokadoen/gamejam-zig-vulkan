@@ -47,7 +47,8 @@ pub fn initAllUnits(allocator: *Allocator) !void {
         allocator, 
         sprite.getGlobal(.sword_man_prototype), 
         0.2,
-        100, 25, 100, 25, 0.5, 
+        // since we cheat range check (avoid sqrt) do range * range
+        100, 25, 100, 25 * 25, 0.5, 
         [2][]const render2d.TextureHandle{&sword_man_anim_move, &sword_man_anim_attack}
     );
 
@@ -58,7 +59,8 @@ pub fn initAllUnits(allocator: *Allocator) !void {
         allocator, 
         sprite.getGlobal(.laser_goblin_prototype),
         0.3,
-        50, 10, 30, 300, 1, 
+        // since we cheat range check (avoid sqrt) do range * range
+        50, 10, 30, 300 * 300, 1, 
         [2][]const render2d.TextureHandle{&laser_goblin_anim_move, &laser_goblin_anim_attack}
     );
 
