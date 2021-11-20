@@ -89,8 +89,8 @@ pub fn initCastles(allocator: *Allocator) !void {
         .enemy
     );
 
-    player_castle.setOpponent(&enemy_castle);
-    enemy_castle.setOpponent(&player_castle);
+    try player_castle.setOpponent(&enemy_castle);
+    try enemy_castle.setOpponent(&player_castle);
 
 }
 
@@ -146,7 +146,7 @@ fn btnCallback() void {
 }
 
 /// extend main's mouse button input handling
-pub inline fn mouseBtnInputFn(event: input.MouseButtonEvent) void {
+pub fn mouseBtnInputFn(event: input.MouseButtonEvent) bool {
     if (event.button == .left) {
         if (hover_button) |*some| {
             if (event.action == .press) {
@@ -156,13 +156,20 @@ pub inline fn mouseBtnInputFn(event: input.MouseButtonEvent) void {
             }
         }
     }
+
+    if (hover_button) |_| {
+        return true;
+    } 
+    return false;
 }
 
 /// extend main's cursor input handling
-pub inline fn cursorPosInputFn(event: input.CursorPosEvent) void {
+pub inline fn cursorPosInputFn(event: input.CursorPosEvent, camera: render2d.Camera) void {
+    const camera_pos = camera.getPosition();
+    const camera_zoom = camera.getZoom();
     const vec_event = Vec2.new(
-        @floatCast(f32, event.x) - window_width * 0.5, 
-        (@floatCast(f32, event.y) - window_height * 0.5) * -1
+        (@floatCast(f32, event.x) - window_width * 0.5 - camera_pos.x) / camera_zoom.x, 
+        ((@floatCast(f32, event.y) - window_height * 0.5) * -1 - camera_pos.y) / camera_zoom.y
     );
 
     var prev_button = hover_button;

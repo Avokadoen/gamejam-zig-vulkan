@@ -15,7 +15,7 @@ const render2d = @import("render2d/render2d.zig");
 
 const game = @import("game/game.zig");
 
-pub const application_name = "zig vulkan";
+pub const application_name = "castle defence";
 
 // TODO: wrap this in render to make main seem simpler :^)
 var window: glfw.Window = undefined;
@@ -165,6 +165,13 @@ fn keyInputFn(event: input.KeyEvent) void {
 }
 
 fn mouseBtnInputFn(event: input.MouseButtonEvent) void {
+    // if a button is selected, we don't control camera zoom
+    if (game.mouseBtnInputFn(event)) {
+        zoom_in = false;  
+        zoom_out = false;
+        return;
+    }
+
     if (event.action == input.Action.press) {
         if (event.button == input.MouseButton.left) {   
             zoom_in = true;    
@@ -180,10 +187,9 @@ fn mouseBtnInputFn(event: input.MouseButtonEvent) void {
         }
     }
 
-    game.mouseBtnInputFn(event);
 }
 
 fn cursorPosInputFn(event: input.CursorPosEvent) void {
-    game.cursorPosInputFn(event);
+    game.cursorPosInputFn(event, camera);
 }
 
