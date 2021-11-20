@@ -45,7 +45,9 @@ health_max: f32,
 health_current: f32,
 damage: f32,
 range: i32,
+
 units_spawned: u32,
+max_units_spawned: u32,
 
 attack_speed: f32,
 
@@ -118,6 +120,7 @@ pub fn init(allocator: *Allocator, sprite: *Sprite, swordman_clone: Unit, laser_
         .spawn_pos = self_pos,
         .enemy_pos = enemy_pos,
         .units_spawned = 0,
+        .max_units_spawned = 0,
         .units = undefined,
         .unit_getter = unit_getter,
         .team = team,
@@ -186,39 +189,61 @@ pub fn tick(self: *Castle, delta_time: f32) void{
         }
         ctx.tick_event.set();
     }
+
+    {
+        var i: usize = 0; 
+        while (i < self.units_spawned) : (i += 1) {
+            if (self.units[i].state == .dead) {
+                self.units[i].deinit();
+
+                self.units_spawned -= 1;
+                std.mem.swap(Unit, &self.units[i], &self.units[self.units_spawned]);
+            }
+        }
+    }
 }
 
 pub fn spawnUnit(self: *Castle) !void{
-    if (self.units_spawned < game_sprite.team_size) {
-        const y_offset = self.rnd.random().float(f32) * 100 - 50;
-        const x_offset = self.rnd.random().float(f32) * 100 - 50;
-        const start = Vec2.new(self.spawn_pos.x + x_offset, self.spawn_pos.y + y_offset);
-        const end   = Vec2.new(self.enemy_pos.x + x_offset, self.enemy_pos.y + y_offset);
-
-        var prototype = blk: {
-            if (self.rnd.random().float(f32) >= 0.5) {
-                break :blk self.swordman_clone;
-            } else {
-                break :blk self.laser_goblin_clone;
-            }
-        };
-
-        var sprite = self.unit_getter(self.units_spawned);
-        sprite.setPosition(start);
-        sprite.setTexture(prototype.anims[0].textures[0]);
-        if (self.team == .player) {
-            const size = prototype.sprite.getSize();
-            sprite.setSize(zlm.Vec2.new(-size.x, size.y));
-        } else {
-            sprite.setSize(prototype.sprite.getSize());
-        }
-
-        self.units[self.units_spawned] = try prototype.clone(sprite);
-        self.units[self.units_spawned].setMove(start, end);
-
-        self.units_spawned += 1;
-
+    if (self.units_spawned >= game_sprite.team_size-1) {
+        return;
     }
+
+    const y_offset = self.rnd.random().float(f32) * 100 - 50;
+    const x_offset = self.rnd.random().float(f32) * 100 - 50;
+    const start = Vec2.new(self.spawn_pos.x + x_offset, self.spawn_pos.y + y_offset);
+    const end   = Vec2.new(self.enemy_pos.x + x_offset, self.enemy_pos.y + y_offset);
+
+    var prototype = blk: {
+        if (self.rnd.random().float(f32) >= 0.5) {
+            break :blk self.swordman_clone;
+        } else {
+            break :blk self.laser_goblin_clone;
+        }
+    };
+
+    // only get a new sprite pointer if there isn't one
+    var sprite = blk: {
+        if (self.units_spawned < self.max_units_spawned) {
+            break :blk self.units[self.units_spawned].sprite;
+        }
+        break :blk self.unit_getter(self.units_spawned); 
+    };
+
+    sprite.setPosition(start);
+    sprite.setTexture(prototype.anims[0].textures[0]);
+
+    if (self.team == .player) {
+        const size = prototype.sprite.getSize();
+        sprite.setSize(zlm.Vec2.new(-size.x, size.y));
+    } else {
+        sprite.setSize(prototype.sprite.getSize());
+    }
+
+    self.units[self.units_spawned] = try prototype.clone(sprite);
+    self.units[self.units_spawned].setMove(start, end);
+
+    self.units_spawned += 1;
+    self.max_units_spawned = std.math.max(self.max_units_spawned, self.units_spawned);
 }
 
 pub fn deinit(self: Castle) void {

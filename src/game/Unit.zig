@@ -30,7 +30,6 @@ damage: f32,
 move_speed: f32,
 range: f32,
 
-
 walk_update_rate: f32,
 attack_speed: f32,
 last_attack: f32 = 0,
