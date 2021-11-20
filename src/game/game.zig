@@ -89,8 +89,8 @@ pub fn initCastles(allocator: *Allocator) !void {
         .enemy
     );
 
-    player_castle.setOpponent(&enemy_castle);
-    enemy_castle.setOpponent(&player_castle);
+    try player_castle.setOpponent(&enemy_castle);
+    try enemy_castle.setOpponent(&player_castle);
 
 }
 

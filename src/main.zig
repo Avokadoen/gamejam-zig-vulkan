@@ -15,7 +15,7 @@ const render2d = @import("render2d/render2d.zig");
 
 const game = @import("game/game.zig");
 
-pub const application_name = "zig vulkan";
+pub const application_name = "castle defence";
 
 // TODO: wrap this in render to make main seem simpler :^)
 var window: glfw.Window = undefined;
