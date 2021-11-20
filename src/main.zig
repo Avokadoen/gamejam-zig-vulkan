@@ -165,6 +165,13 @@ fn keyInputFn(event: input.KeyEvent) void {
 }
 
 fn mouseBtnInputFn(event: input.MouseButtonEvent) void {
+    // if a button is selected, we don't control camera zoom
+    if (game.mouseBtnInputFn(event)) {
+        zoom_in = false;  
+        zoom_out = false;
+        return;
+    }
+
     if (event.action == input.Action.press) {
         if (event.button == input.MouseButton.left) {   
             zoom_in = true;    
@@ -180,10 +187,9 @@ fn mouseBtnInputFn(event: input.MouseButtonEvent) void {
         }
     }
 
-    game.mouseBtnInputFn(event);
 }
 
 fn cursorPosInputFn(event: input.CursorPosEvent) void {
-    game.cursorPosInputFn(event);
+    game.cursorPosInputFn(event, camera);
 }
 
