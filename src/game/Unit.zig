@@ -18,6 +18,9 @@ pub const State = enum(usize) {
     dead,
 };
 
+/// how many opponent units each unit should check if they are in range to attack for
+const unit_search_count: usize = 500;
+
 sprite: *Sprite,
 state: State,
 allocator: *Allocator,
@@ -33,6 +36,8 @@ range: f32,
 walk_update_rate: f32,
 attack_speed: f32,
 last_attack: f32 = 0,
+
+castle_distance: f32 = 0,
 
 pub fn init(allocator: *Allocator, sprite: *Sprite, walk_update_rate: f32, health: f32, damage: f32, move_speed: f32, range: f32, attack_speed: f32, textures: [2][]const render2d.TextureHandle) !Self {
 
@@ -70,8 +75,9 @@ pub fn setMove(self: *Self, start: zlm.Vec2, end: zlm.Vec2) void {
 fn bruteForceRangeCheck(self: *Self, opponent_castle: *Castle) ?*Self {
     {
         const self_pos = self.sprite.getPosition();
+        const range = std.math.min(opponent_castle.units_spawned, unit_search_count);
         var i: usize = 0;
-        while (i < opponent_castle.units_spawned) : (i += 1) {
+        while (i < range) : (i += 1) {
             const target_pos = opponent_castle.units[i].sprite.getPosition();
             const distance = target_pos.sub(self_pos).length2();
             if (std.math.fabs(distance) < self.range) {
@@ -92,7 +98,10 @@ fn castleRange(self: *Self, opponent_castle: *Castle) bool {
     return false;
 }
 
-pub fn tick(self: *Self, delta_time: f32, opponent_castle: *Castle) void {
+pub fn tick(self: *Self, delta_time: f32, my_castle_pos: zlm.Vec2, opponent_castle: *Castle) void {
+    // calculate distance to home 
+    self.castle_distance = std.math.fabs(self.sprite.getPosition().x - my_castle_pos.x);
+
     switch (self.state) {
         .moving => {
             self.anims[@enumToInt(self.state)].tick(delta_time);

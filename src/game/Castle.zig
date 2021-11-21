@@ -143,9 +143,10 @@ pub fn setOpponent(self: *Castle, castle: *Castle) !void {
     errdefer self.allocator.free(self.work_ctx);   
 
     {
+        const self_pos = self.sprite.getPosition();
         var i: usize = 0;
         while(i < half_cpu) : (i += 1) {
-            self.work_ctx[i] = try WorkCtx.init(self.opponent);
+            self.work_ctx[i] = try WorkCtx.init(self_pos, self.opponent);
             self.workers[i] = try std.Thread.spawn(.{}, workerFn, .{ &self.work_ctx[i] });
         }
     }
@@ -191,13 +192,30 @@ pub fn tick(self: *Castle, delta_time: f32) void{
     }
 
     {
-        var i: usize = 0; 
+        // if unit is dead, do cleanup
+        if (self.units[0].state == .dead) {
+            self.units[0].deinit();
+
+            self.units_spawned -= 1;
+            std.mem.swap(Unit, &self.units[0], &self.units[self.units_spawned]);
+        }
+
+        var i: usize = 1; 
         while (i < self.units_spawned) : (i += 1) {
+            // if unit is dead, do cleanup
             if (self.units[i].state == .dead) {
                 self.units[i].deinit();
 
                 self.units_spawned -= 1;
                 std.mem.swap(Unit, &self.units[i], &self.units[self.units_spawned]);
+            }
+
+            // gradually sort units 
+            if (self.units[i].castle_distance > self.units[i-1].castle_distance) {
+                // std.debug.print("sprite: {d} i: {d}\n", .{ @ptrToInt(self.units[i].move.?.sprite), i });
+                std.mem.swap(Unit, &self.units[i], &self.units[i-1]);
+                // std.debug.print("sprite: {d}\n", .{ @ptrToInt(self.units[i-1].move.?.sprite) });
+                // std.debug.print("sprite db ids: {d} {d}\n", .{ self.units[i].sprite.db_id, self.units[i-1].sprite.db_id });
             }
         }
     }
@@ -282,14 +300,16 @@ const WorkCtx = struct {
     mtx: Thread.Mutex,
     tick_event: Thread.ResetEvent,
     delta_time: f32,
+    castle_pos: zlm.Vec2, // this castle pos (not opponent)
     opponent: *Castle,
     units: []Unit,
 
-    pub fn init(opponent: *Castle) !WorkCtx{
+    pub fn init(castle_pos: zlm.Vec2, opponent: *Castle) !WorkCtx{
         var ctx = WorkCtx{
             .mtx = .{},
             .tick_event = undefined,
             .delta_time = 0,
+            .castle_pos = castle_pos,
             .opponent = opponent,
             .units = undefined,
         };
@@ -307,7 +327,7 @@ fn workerFn(ctx: *WorkCtx) void {
             defer ctx.mtx.unlock();
 
             for(ctx.units) |*unit| {
-                unit.tick(ctx.delta_time, ctx.opponent);
+                unit.tick(ctx.delta_time, ctx.castle_pos, ctx.opponent);
             }
 
             ctx.tick_event.reset();
