@@ -94,6 +94,15 @@ pub fn initCastles(allocator: *Allocator) !void {
     try player_castle.setOpponent(&enemy_castle);
     try enemy_castle.setOpponent(&player_castle);
 
+    // spawn some units to benchmark 
+    var i: usize = 0;
+    while (i < 256) : (i += 1) {
+        try player_castle.spawnUnit();
+    }
+    i = 0;
+    while (i < 256) : (i += 1) {
+        try enemy_castle.spawnUnit();
+    }
 }
 
 /// caller must make sure to calle deinitGui
@@ -115,12 +124,12 @@ pub fn globalTick(delta_time: f32) void {
     player_castle.tick(delta_time);
     enemy_castle.tick(delta_time);
 
-    last_spawn += delta_time;
-    if (last_spawn >= spawn_rate) {
-        player_castle.spawnUnit() catch {};
-        enemy_castle.spawnUnit() catch {};
-        last_spawn -= spawn_rate;
-    }    
+    // last_spawn += delta_time;
+    // if (last_spawn >= spawn_rate) {
+    //     player_castle.spawnUnit() catch {};
+    //     enemy_castle.spawnUnit() catch {};
+    //     last_spawn -= spawn_rate;
+    // }    
 }
 
 

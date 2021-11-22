@@ -96,12 +96,36 @@ pub fn main() anyerror!void {
     defer game.deinitGui();
      
     var prev_frame = std.time.milliTimestamp();
+
+    var last_fps_tick: f32 = 0;
+    var average_ms: f64 = 0;
+    var max_ms: f64 = -9999;
+    var total_seconds: u64 = 0;
+
     // Loop until the user closes the window
     while (!window.shouldClose()) {
         const current_frame = std.time.milliTimestamp();
+        const ms = @intToFloat(f64, current_frame - prev_frame);
         delta_time = @intToFloat(f64, current_frame - prev_frame) / @as(f64, std.time.ms_per_s);
 
         const dt = @floatCast(f32, delta_time);
+        last_fps_tick += dt;
+
+        if (average_ms > 0) {
+            average_ms += ms;
+            average_ms *= 0.5;
+        } else {
+            average_ms = ms;
+        }
+        max_ms = std.math.max(max_ms, ms);
+        if (last_fps_tick >= 1) {
+            last_fps_tick = 0;
+
+            total_seconds += 1;
+            if (total_seconds == 10) {
+                std.debug.print("benchmark: avg: {d}, max: {d}\n", .{average_ms, max_ms});
+            }
+        }
         
         if (zoom_in) {
             camera.zoomIn(dt);
