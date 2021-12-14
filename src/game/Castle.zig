@@ -26,7 +26,7 @@ pub const Team = enum {
     player
 };
 
-allocator: *Allocator,
+allocator: Allocator,
 
 sprite: *Sprite,
 swordman_clone: Unit,
@@ -61,7 +61,7 @@ rnd: Rnd,
 work_ctx: []WorkCtx,
 workers: []Thread,
 
-pub fn init(allocator: *Allocator, sprite: *Sprite, swordman_clone: Unit, laser_goblin_clone: Unit, health: f32, damage: f32, range: i32, attack_speed: f32, textures: [2][]const render2d.TextureHandle, team: Team) !Castle {
+pub fn init(allocator: Allocator, sprite: *Sprite, swordman_clone: Unit, laser_goblin_clone: Unit, health: f32, damage: f32, range: i32, attack_speed: f32, textures: [2][]const render2d.TextureHandle, team: Team) !Castle {
     var anim: [2]Anim = undefined;
     anim[0] = try Anim.init(allocator, sprite, textures[0], 1);
     errdefer anim[0].deinit();

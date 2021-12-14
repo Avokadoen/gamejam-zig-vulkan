@@ -42,27 +42,24 @@ pub fn main() anyerror!void {
             }
         }
     }
-    const allocator = if (consts.enable_validation_layers) &alloc.allocator else alloc;
+    const allocator = if (consts.enable_validation_layers) alloc.allocator() else alloc;
     
     // Initialize the library *
-    try glfw.init();
+    try glfw.init(.{});
     defer glfw.terminate();
 
-    if (!try glfw.vulkanSupported()) {
+    if (!glfw.vulkanSupported()) {
         std.debug.panic("vulkan not supported on device (glfw)", .{});
     }
 
-    // Tell glfw that we are planning to use a custom API (not opengl)
-    try glfw.Window.hint(glfw.Window.Hint.client_api, glfw.no_api);
-
     // Create a windowed mode window 
-    window = glfw.Window.create(1920, 1080, application_name, null, null) catch |err| {
+    window = glfw.Window.create(1920, 1080, application_name, null, null, .{ .client_api = .no_api}) catch |err| {
         try stderr.print("failed to create window, code: {}", .{err});
         return;
     };
     defer window.destroy();
 
-    const ctx = try render.Context.init(allocator, application_name, &window, null);
+    const ctx = try render.Context.init(allocator, application_name, &window);
     defer ctx.deinit();
 
     // init input module with iput handler functions
@@ -150,7 +147,7 @@ fn keyInputFn(event: input.KeyEvent) void {
             input.Key.s => move_down = true,
             input.Key.d => move_left = true,
             input.Key.a => move_right = true,
-            input.Key.escape => window.setShouldClose(true) catch unreachable,
+            input.Key.escape => window.setShouldClose(true),
             else => { },
         }   
     } else if (event.action == .release) {

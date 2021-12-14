@@ -53,12 +53,14 @@ pub inline fn getRotation(self: *Sprite) f32 {
 pub inline fn setTexture(self: *Sprite, new_handle: TextureHandle) void {
     const index = self.db_ptr.getIndex(&self.db_id);
     self.db_ptr.uv_indices.updateAt(index, new_handle.id);
+    self.db_ptr.uv_meta.items[@intCast(usize, new_handle.id)] = new_handle;
 }
 
-// pub inline fn getTexture(self: *Sprite) TextureHandle {
-//     const index = self.db_ptr.getIndex(&self.db_id);
-//     return self.db_ptr.uv_indices.storage.items[index];
-// }
+pub inline fn getTexture(self: *Sprite) TextureHandle {
+    const index = self.db_ptr.getIndex(&self.db_id);
+    const uv_index = self.db_ptr.uv_indices.storage.items[index];
+    return self.db_ptr.uv_meta.items[uv_index];
+}
 
 /// Update the sprite layer
 pub inline fn setLayer(self: *Sprite, layer: usize) !void {

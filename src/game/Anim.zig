@@ -7,7 +7,7 @@ const TextureHandle = render2d.TextureHandle;
 
 const Self = @This();
 
-allocator: *Allocator,
+allocator: Allocator,
 
 sprite: *Sprite,
 frame: usize,
@@ -17,7 +17,7 @@ last_update: f32,
 update_frequency: f32,
 
 /// caller must make sure to call deinit
-pub fn init(allocator: *Allocator, sprite: *Sprite, textures: []const TextureHandle, update_frequency: f32) !Self {
+pub fn init(allocator: Allocator, sprite: *Sprite, textures: []const TextureHandle, update_frequency: f32) !Self {
     // std.debug.print("anim start pos: {d} {d} {d}\n", .{sprite.db_id, sprite.getPosition().x, sprite.getPosition().y});
     
     var alloc_textures = try allocator.alloc(TextureHandle, textures.len);

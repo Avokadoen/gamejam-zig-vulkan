@@ -13,19 +13,12 @@ const QueueFamilyIndices = physical_device.QueueFamilyIndices;
 const validation_layer = @import("validation_layer.zig");
 const vk_utils = @import("vk_utils.zig");
 
-// TODO: mutex protection before prints
-pub const IoWriters = struct {
-    made_in_ctx: bool = false, // should only be set to true by Context
-    stdout: *const std.fs.File.Writer,
-    stderr: *const std.fs.File.Writer,
-};
-
 // TODO: move command pool to context? 
 
 /// Utilized to supply vulkan methods and common vulkan state to other
 /// renderer functions and structs
 pub const Context = struct {
-    allocator: *Allocator,
+    allocator: Allocator,
 
     vkb: dispatch.Base,
     vki: dispatch.Instance,
@@ -47,13 +40,12 @@ pub const Context = struct {
 
     // TODO: utilize comptime for this (emit from struct if we are in release mode)
     messenger: ?vk.DebugUtilsMessengerEXT,
-    writers: *IoWriters,
 
     /// pointer to the window handle. Caution is adviced when using this pointer ...
     window_ptr: *glfw.Window,
 
     // Caller should make sure to call deinit, context takes ownership of IoWriters
-    pub fn init(allocator: *Allocator, application_name: []const u8, window: *glfw.Window, io_writers: ?*IoWriters) !Context {
+    pub fn init(allocator: Allocator, application_name: []const u8, window: *glfw.Window) !Context {
         const app_name = try std.cstr.addNullByte(allocator, application_name);
         defer allocator.destroy(app_name.ptr);
         
@@ -65,10 +57,10 @@ pub const Context = struct {
             .engine_version = consts.engine_version,
             .api_version = vk.API_VERSION_1_2,
         };
-
+        
         // TODO: move to global scope (currently crashes the zig compiler :') )
+        const common_extensions = [_][*:0]const u8{vk.extension_info.khr_surface.name};
         const application_extensions = blk: {
-            const common_extensions = [_][*:0]const u8{vk.extension_info.khr_surface.name};
             if (consts.enable_validation_layers) {
                 const debug_extensions = [_][*:0]const u8{
                     vk.extension_info.ext_debug_report.name,
@@ -79,40 +71,25 @@ pub const Context = struct {
             break :blk common_extensions[0..];
         };
 
-        const extensions = blk: {
-            const glfw_extensions_slice = try glfw.getRequiredInstanceExtensions();
-            var extensions = try ArrayList([*:0]const u8).initCapacity(allocator, glfw_extensions_slice.len + application_extensions.len);
-            for (glfw_extensions_slice) |extension| {
-                extensions.appendAssumeCapacity(extension);
-            }
-            for (application_extensions) |extension| {
-                extensions.appendAssumeCapacity(extension);
-            }
-            break :blk extensions;
-        };
+        const glfw_extensions_slice = try glfw.getRequiredInstanceExtensions();
+        // Due to a zig bug we need arraylist to append instead of preallocate slice
+        // in release it fails and lenght turnes out to be 1
+        var extensions = try ArrayList([*:0]const u8).initCapacity(allocator, glfw_extensions_slice.len + application_extensions.len);
         defer extensions.deinit();
 
+        for (glfw_extensions_slice) |extension| {
+            try extensions.append(extension);
+        }
+        for (application_extensions) |extension| {
+            try extensions.append(extension);
+        }
+        
         // Partially init a context so that we can use "self" even in init 
         var self: Context = undefined;
         self.allocator = allocator;
-
-        // use supplied writers, or make our own
-        self.writers = blk: {
-            if (io_writers) |write| {
-                break :blk write;
-            }
-            var heap_writers = try allocator.alloc(std.fs.File.Writer, 2);
-            heap_writers[0] = std.io.getStdErr().writer();
-            heap_writers[1] = std.io.getStdOut().writer();
-            var writers_struct = try allocator.alloc(IoWriters, 1);
-            writers_struct[0].made_in_ctx = true;
-            writers_struct[0].stderr = &heap_writers[0];
-            writers_struct[0].stdout = &heap_writers[1];
-            break :blk @ptrCast(*IoWriters, writers_struct.ptr);
-        };
-
+       
         // load base dispatch wrapper
-        const vk_proc = @ptrCast(fn(instance: vk.Instance, procname: [*:0]const u8) vk.PfnVoidFunction, glfw.getInstanceProcAddress);
+        const vk_proc = @ptrCast(vk.PfnGetInstanceProcAddr, glfw.getInstanceProcAddress);
         self.vkb = try dispatch.Base.load(vk_proc);
         if (!(try vk_utils.isInstanceExtensionsPresent(allocator, self.vkb, extensions.items))) {
             return error.InstanceExtensionNotPresent;
@@ -123,7 +100,7 @@ pub const Context = struct {
         var create_p_next: ?*c_void = null;
         if (consts.enable_validation_layers) {
             comptime { std.debug.assert(consts.enable_validation_layers); }
-            var debug_create_info = createDefaultDebugCreateInfo(self.writers);
+            var debug_create_info = createDefaultDebugCreateInfo();
             create_p_next = @ptrCast(?*c_void, &debug_create_info);
         }
 
@@ -137,9 +114,9 @@ pub const Context = struct {
                 .enabled_extension_count = @intCast(u32, extensions.items.len),
                 .pp_enabled_extension_names = @ptrCast([*]const [*:0]const u8, extensions.items.ptr),
             };
-            break :blk try self.vkb.createInstance(instanceInfo, null);
+            break :blk try self.vkb.createInstance(&instanceInfo, null);
         };
-
+       
         self.vki = try dispatch.Instance.load(self.instance, vk_proc);
         errdefer self.vki.destroyInstance(self.instance, null);
 
@@ -153,8 +130,8 @@ pub const Context = struct {
 
         self.messenger = blk: {
             if (!consts.enable_validation_layers) break :blk null;
-            const create_info = createDefaultDebugCreateInfo(self.writers);
-            break :blk self.vki.createDebugUtilsMessengerEXT(self.instance, create_info, null) catch {
+            const create_info = createDefaultDebugCreateInfo();
+            break :blk self.vki.createDebugUtilsMessengerEXT(self.instance, &create_info, null) catch {
                 std.debug.panic("failed to create debug messenger", .{});
             };
         };
@@ -170,8 +147,7 @@ pub const Context = struct {
                 .flags = .{},
                 .queue_family_index = self.queue_indices.graphics,
             };
-
-            break :blk try self.vkd.createCommandPool(self.logical_device, pool_info, null);
+            break :blk try self.vkd.createCommandPool(self.logical_device, &pool_info, null);
         };
 
         self.comp_cmd_pool = blk: {
@@ -179,8 +155,7 @@ pub const Context = struct {
                 .flags = .{},
                 .queue_family_index = self.queue_indices.compute,
             };
-
-            break :blk try self.vkd.createCommandPool(self.logical_device, pool_info, null);
+            break :blk try self.vkd.createCommandPool(self.logical_device, &pool_info, null);
         };
 
         // possibly a bit wasteful, but to get compile errors when forgetting to
@@ -201,7 +176,6 @@ pub const Context = struct {
             .gfx_cmd_pool  = self.gfx_cmd_pool,
             .comp_cmd_pool  = self.comp_cmd_pool,
             .messenger = self.messenger,
-            .writers = self.writers,
             .window_ptr = window,
         };
     }
@@ -214,8 +188,7 @@ pub const Context = struct {
             .p_code = @ptrCast([*]const u32, @alignCast(4, spir_v.ptr)),
             .code_size = spir_v.len,
         };
-
-        return self.vkd.createShaderModule(self.logical_device, create_info, null);
+        return self.vkd.createShaderModule(self.logical_device, &create_info, null);
     }
 
     pub fn destroyShaderModule(self: Context, module: vk.ShaderModule) void {
@@ -224,7 +197,7 @@ pub const Context = struct {
 
     /// caller must destroy returned module 
     pub fn createPipelineLayout(self: Context, create_info: vk.PipelineLayoutCreateInfo) !vk.PipelineLayout {
-        return self.vkd.createPipelineLayout(self.logical_device, create_info, null);
+        return self.vkd.createPipelineLayout(self.logical_device, &create_info, null);
     }
 
     pub fn destroyPipelineLayout(self: Context, pipeline_layout: vk.PipelineLayout) void {
@@ -232,7 +205,7 @@ pub const Context = struct {
     }
 
     /// caller must both destroy pipeline from the heap and in vulkan
-    pub fn createGraphicsPipeline(self: Context, allocator: *Allocator, create_info: vk.GraphicsPipelineCreateInfo) !*vk.Pipeline {
+    pub fn createGraphicsPipeline(self: Context, allocator: Allocator, create_info: vk.GraphicsPipelineCreateInfo) !*vk.Pipeline {
         var pipeline = try allocator.create(vk.Pipeline);
         errdefer allocator.destroy(pipeline);
 
@@ -249,7 +222,7 @@ pub const Context = struct {
     }
 
     /// caller must both destroy pipeline from the heap and in vulkan
-    pub fn createComputePipeline(self: Context, allocator: *Allocator, create_info: vk.ComputePipelineCreateInfo) !*vk.Pipeline {
+    pub fn createComputePipeline(self: Context, allocator: Allocator, create_info: vk.ComputePipelineCreateInfo) !*vk.Pipeline {
         var pipeline = try allocator.create(vk.Pipeline);
         errdefer allocator.destroy(pipeline);
 
@@ -325,8 +298,7 @@ pub const Context = struct {
             .dependency_count = 1,
             .p_dependencies = @ptrCast([*]const vk.SubpassDependency, &subpass_dependency),
         };
-
-        return try self.vkd.createRenderPass(self.logical_device, render_pass_info, null);
+        return try self.vkd.createRenderPass(self.logical_device, &render_pass_info, null);
     }
 
     pub fn destroyRenderPass(self: Context, render_pass: vk.RenderPass) void {
@@ -344,17 +316,11 @@ pub const Context = struct {
             self.vki.destroyDebugUtilsMessengerEXT(self.instance, self.messenger.?, null);
         }
         self.vki.destroyInstance(self.instance, null);
-
-        if (self.writers.*.made_in_ctx) {
-            self.allocator.free(@ptrCast(*const [2]std.fs.File.Writer, self.writers.stderr));
-            self.allocator.free(@ptrCast(*const [1]IoWriters, self.writers));
-        }
-  
     }
 };
 
 // TODO: can probably drop function and inline it in init
-fn createDefaultDebugCreateInfo(writers: *IoWriters) vk.DebugUtilsMessengerCreateInfoEXT {
+fn createDefaultDebugCreateInfo() vk.DebugUtilsMessengerCreateInfoEXT {
     const message_severity = vk.DebugUtilsMessageSeverityFlagsEXT{
         .verbose_bit_ext = true,
         .warning_bit_ext = true,
@@ -372,6 +338,6 @@ fn createDefaultDebugCreateInfo(writers: *IoWriters) vk.DebugUtilsMessengerCreat
         .message_severity = message_severity,
         .message_type = message_type,
         .pfn_user_callback = validation_layer.messageCallback,
-        .p_user_data = @ptrCast(?*c_void, writers),
+        .p_user_data = null,
     };
 }

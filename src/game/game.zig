@@ -39,7 +39,7 @@ pub fn createAllSprites(api: *render2d.InitializedApi, w_width: f32, w_height: f
 }
 
 /// caller must make sure to call deinitUnits
-pub fn initAllUnits(allocator: *Allocator) !void {
+pub fn initAllUnits(allocator: Allocator) !void {
     // create a test unit for now
     const sword_man_anim_move = [_]render2d.TextureHandle{ texture.get(.sword_man_idle), texture.get(.sword_man_move)};
     const sword_man_anim_attack = [_]render2d.TextureHandle{ texture.get(.sword_man_idle), texture.get(.sword_man_attack)};
@@ -67,7 +67,7 @@ pub fn initAllUnits(allocator: *Allocator) !void {
 }
 
 /// caller must make sure to call deinitCastles
-pub fn initCastles(allocator: *Allocator) !void {
+pub fn initCastles(allocator: Allocator) !void {
     const caste_anim_idle = [_]render2d.TextureHandle{texture.get(.castle_idle)};
     const caste_anim_attack = [_]render2d.TextureHandle{texture.get(.castle_spawn)};
 
@@ -97,7 +97,7 @@ pub fn initCastles(allocator: *Allocator) !void {
 }
 
 /// caller must make sure to calle deinitGui
-pub fn initGui(allocator: *Allocator) !void {
+pub fn initGui(allocator: Allocator) !void {
     buttons = ArrayList(Button).init(allocator);
     try buttons.append(Button.init(
         sprite.getGlobal(.spawn_btn), 

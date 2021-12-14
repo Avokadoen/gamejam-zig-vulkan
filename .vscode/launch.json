@@ -5,7 +5,7 @@
     "version": "0.2.0",
     "configurations": [
         {
-            "name": "(Windows) Launch",
+            "name": "(Windows) Launch Debug",
             "type": "cppvsdbg",
             "request": "launch",
             "program": "${workspaceFolder}/zig-out/bin/zig_vulkan.exe",
@@ -14,7 +14,7 @@
             "cwd": "${fileDirname}",
             "environment": [],
             "console": "externalTerminal",
-            "preLaunchTask": "build"
+            "preLaunchTask": "debug"
         },
         {
             "name": "(Windows) Launch Release Safe",
@@ -29,15 +29,22 @@
             "preLaunchTask": "safe"
         },
         {
-            "name": "(Linux) Launch",
+            "name": "(Linux) Launch Debug",
             "type": "lldb",
             "request": "launch",
             "program": "${workspaceFolder}/zig-out/bin/zig_vulkan",
             "args": [],
-            // "stopAtEntry": false,
             "cwd": "${fileDirname}",
-            // "environment": [],
-            "preLaunchTask": "build"
+            "preLaunchTask": "debug"
+        },
+        {
+            "name": "(Linux) Launch Release Safe",
+            "type": "lldb",
+            "request": "launch",
+            "program": "${workspaceFolder}/zig-out/bin/zig_vulkan",
+            "args": [],
+            "cwd": "${fileDirname}",
+            "preLaunchTask": "debug"
         }
     ]
 }

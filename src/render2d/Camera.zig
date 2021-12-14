@@ -8,9 +8,6 @@ const Camera = @This();
 
 move_speed: f32,
 zoom_speed: f32,
-current_zoom: f32 = 0,
-
-view: sc.ViewportScissor,
 
 sync_desc_ptr: *descriptor.SyncDescriptor,
 
@@ -19,6 +16,7 @@ pub fn zoomIn(self: *Camera, delta_time: f32) void {
     const fields = &self.sync_desc_ptr.*.ubo.uniform_data.view.fields;
     fields.*[0][0] += (fields.*[0][0] * (self.zoom_speed * dt)) + dt;
     fields.*[1][1] += (fields.*[1][1] * (self.zoom_speed * dt)) + dt;
+    fields.*[2][2] += (fields.*[2][2] * (self.zoom_speed * dt)) + dt;
     self.sync_desc_ptr.ubo.mark_dirty();
 }
 
@@ -27,6 +25,7 @@ pub fn zoomOut(self: *Camera, delta_time: f32) void {
     const fields = &self.sync_desc_ptr.*.ubo.uniform_data.view.fields;
     fields.*[0][0] -= (fields.*[0][0] * (self.zoom_speed * dt)) + dt;
     fields.*[1][1] -= (fields.*[1][1] * (self.zoom_speed * dt)) + dt;
+    fields.*[2][2] -= (fields.*[2][2] * (self.zoom_speed * dt)) + dt;
     self.sync_desc_ptr.ubo.mark_dirty();
 }
 

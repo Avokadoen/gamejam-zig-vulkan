@@ -7,7 +7,9 @@ const Context = render.Context;
 const GpuBufferMemory = render.GpuBufferMemory;
 
 const zlm = @import("zlm");
-const UV = @import("util_types.zig").UV;
+const util_types = @import("util_types.zig");
+const UV = util_types.UV;
+const TextureHandle = util_types.TextureHandle;
 
 const DB = @This();
 
@@ -43,6 +45,7 @@ const ShiftEvent = union(ShiftEnum) {
 len: usize,
 sprite_pool_size: usize,
 uv_buffer: StorageType(zlm.Vec2),
+uv_meta: ArrayList(TextureHandle), 
 
 // used to lookup index of sprite in array's using ID
 layer_data: ArrayList(Layer),
@@ -56,13 +59,14 @@ scales: StorageType(zlm.Vec2),
 rotations: StorageType(f32),
 uv_indices: StorageType(c_int),
 
-pub fn initCapacity(allocator: *Allocator, capacity: usize) !DB {
+pub fn initCapacity(allocator: Allocator, capacity: usize) !DB {
     var layers = ArrayList(Layer).init(allocator);
     try layers.append(.{ .id = 0, .len = 0, .begin_index = 0, });
     return DB{
         .len = 0,
         .sprite_pool_size = capacity,
         .uv_buffer      = try StorageType(zlm.Vec2).initCapacity(allocator, 10 * 4 * 2), // TODO: allow configure
+        .uv_meta        = try ArrayList(TextureHandle).initCapacity(allocator, capacity),
         .layer_data     = layers,
         .shift_events   = ArrayList(ShiftEvent).init(allocator),
         .positions      = try StorageType(zlm.Vec2).initCapacity(allocator, capacity),
@@ -247,6 +251,7 @@ pub fn deinit(self: DB) void {
     self.rotations.deinit();
     self.uv_indices.deinit();
     self.uv_buffer.deinit();
+    self.uv_meta.deinit();
 }
 
 const DeltaRange = struct {
@@ -263,7 +268,7 @@ fn StorageType(comptime T: type) type {
         storage: ArrayList(T),
         delta: DeltaRange,
 
-        pub inline fn initCapacity(allocator: *Allocator, capacity: usize) !Self {
+        pub inline fn initCapacity(allocator: Allocator, capacity: usize) !Self {
             return Self {
                 .storage = try ArrayList(T).initCapacity(allocator, capacity),
                 .delta = .{ .has_changes = false, .from = 0, .to = 0 },
