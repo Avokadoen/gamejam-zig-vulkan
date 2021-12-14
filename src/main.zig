@@ -42,27 +42,24 @@ pub fn main() anyerror!void {
             }
         }
     }
-    const allocator = if (consts.enable_validation_layers) &alloc.allocator else alloc;
+    const allocator = if (consts.enable_validation_layers) alloc.allocator() else alloc;
     
     // Initialize the library *
-    try glfw.init();
+    try glfw.init(.{});
     defer glfw.terminate();
 
-    if (!try glfw.vulkanSupported()) {
+    if (!glfw.vulkanSupported()) {
         std.debug.panic("vulkan not supported on device (glfw)", .{});
     }
 
-    // Tell glfw that we are planning to use a custom API (not opengl)
-    try glfw.Window.hint(glfw.Window.Hint.client_api, glfw.no_api);
-
     // Create a windowed mode window 
-    window = glfw.Window.create(1920, 1080, application_name, null, null) catch |err| {
+    window = glfw.Window.create(1920, 1080, application_name, null, null, .{ .client_api = .no_api}) catch |err| {
         try stderr.print("failed to create window, code: {}", .{err});
         return;
     };
     defer window.destroy();
 
-    const ctx = try render.Context.init(allocator, application_name, &window, null);
+    const ctx = try render.Context.init(allocator, application_name, &window);
     defer ctx.deinit();
 
     // init input module with iput handler functions
@@ -96,36 +93,12 @@ pub fn main() anyerror!void {
     defer game.deinitGui();
      
     var prev_frame = std.time.milliTimestamp();
-
-    var last_fps_tick: f32 = 0;
-    var average_ms: f64 = 0;
-    var max_ms: f64 = -9999;
-    var total_seconds: u64 = 0;
-
     // Loop until the user closes the window
     while (!window.shouldClose()) {
         const current_frame = std.time.milliTimestamp();
-        const ms = @intToFloat(f64, current_frame - prev_frame);
         delta_time = @intToFloat(f64, current_frame - prev_frame) / @as(f64, std.time.ms_per_s);
 
         const dt = @floatCast(f32, delta_time);
-        last_fps_tick += dt;
-
-        if (average_ms > 0) {
-            average_ms += ms;
-            average_ms *= 0.5;
-        } else {
-            average_ms = ms;
-        }
-        max_ms = std.math.max(max_ms, ms);
-        if (last_fps_tick >= 1) {
-            last_fps_tick = 0;
-
-            total_seconds += 1;
-            if (total_seconds == 10) {
-                std.debug.print("benchmark: avg: {d}, max: {d}\n", .{average_ms, max_ms});
-            }
-        }
         
         if (zoom_in) {
             camera.zoomIn(dt);
@@ -174,7 +147,7 @@ fn keyInputFn(event: input.KeyEvent) void {
             input.Key.s => move_down = true,
             input.Key.d => move_left = true,
             input.Key.a => move_right = true,
-            input.Key.escape => window.setShouldClose(true) catch unreachable,
+            input.Key.escape => window.setShouldClose(true),
             else => { },
         }   
     } else if (event.action == .release) {

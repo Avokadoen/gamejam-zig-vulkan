@@ -44,6 +44,8 @@ pub const ViewportScissor = struct {
 };
 
 // TODO: rename
+// TODO: mutex! : the data is shared between rendering implementation and pipeline
+//                pipeline will attempt to update the data in the event of rescale which might lead to RC 
 pub const Data = struct {
     swapchain: vk.SwapchainKHR,
     images: ArrayList(vk.Image),
@@ -53,7 +55,7 @@ pub const Data = struct {
     support_details: SupportDetails,
     
     // create a swapchain data struct, caller must make sure to call deinit
-    pub fn init(allocator: *Allocator, ctx: Context, old_swapchain: ?vk.SwapchainKHR) !Data {
+    pub fn init(allocator: Allocator, ctx: Context, old_swapchain: ?vk.SwapchainKHR) !Data {
         const support_details = try SupportDetails.init(allocator, ctx.vki, ctx.physical_device, ctx.surface);
         errdefer support_details.deinit();
 
@@ -110,7 +112,7 @@ pub const Data = struct {
                 .old_swapchain = old_swapchain orelse vk.SwapchainKHR.null_handle,
             };
         };
-        const swapchain_khr = try ctx.vkd.createSwapchainKHR(ctx.logical_device, sc_create_info, null);
+        const swapchain_khr = try ctx.vkd.createSwapchainKHR(ctx.logical_device, &sc_create_info, null);
         const swapchain_images = blk: {
             var image_count: u32 = 0;
             // TODO: handle incomplete
@@ -149,7 +151,7 @@ pub const Data = struct {
                         .components = components,
                         .subresource_range = subresource_range,
                     };
-                    const view = try ctx.vkd.createImageView(ctx.logical_device, create_info, null);
+                    const view = try ctx.vkd.createImageView(ctx.logical_device, &create_info, null);
                     views.appendAssumeCapacity(view);
                 }
             }
@@ -188,7 +190,7 @@ pub const SupportDetails = struct {
     present_modes: ArrayList(vk.PresentModeKHR),
 
     /// caller has to make sure to also call deinit
-    pub fn init(allocator: *Allocator, vki: dispatch.Instance, device: vk.PhysicalDevice, surface: vk.SurfaceKHR) !Self {
+    pub fn init(allocator: Allocator, vki: dispatch.Instance, device: vk.PhysicalDevice, surface: vk.SurfaceKHR) !Self {
         const capabilities = try vki.getPhysicalDeviceSurfaceCapabilitiesKHR(device, surface);
 
         var format_count: u32 = 0;

@@ -20,7 +20,7 @@ pub const State = enum(usize) {
 
 sprite: *Sprite,
 state: State,
-allocator: *Allocator,
+allocator: Allocator,
 
 anims: [2]Anim,
 move: ?Move,
@@ -34,7 +34,7 @@ walk_update_rate: f32,
 attack_speed: f32,
 last_attack: f32 = 0,
 
-pub fn init(allocator: *Allocator, sprite: *Sprite, walk_update_rate: f32, health: f32, damage: f32, move_speed: f32, range: f32, attack_speed: f32, textures: [2][]const render2d.TextureHandle) !Self {
+pub fn init(allocator: Allocator, sprite: *Sprite, walk_update_rate: f32, health: f32, damage: f32, move_speed: f32, range: f32, attack_speed: f32, textures: [2][]const render2d.TextureHandle) !Self {
 
     var anim: [2]Anim = undefined;
     anim[0] = try Anim.init(allocator, sprite, textures[0], walk_update_rate);

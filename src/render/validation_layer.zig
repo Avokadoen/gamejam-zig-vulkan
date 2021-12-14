@@ -16,7 +16,7 @@ fn InfoType() type {
             enabled_layer_count: u8,
             enabled_layer_names: [*]const [*:0]const u8,
 
-            pub fn init(allocator: *Allocator, vkb: dispatch.Base) !Self {
+            pub fn init(allocator: Allocator, vkb: dispatch.Base) !Self {
                 const validation_layers = [_][*:0]const u8{"VK_LAYER_KHRONOS_validation"};
                 const is_valid = try isLayersPresent(allocator, vkb, validation_layers[0..validation_layers.len]);
                 if (!is_valid) {
@@ -36,7 +36,7 @@ fn InfoType() type {
             enabled_layer_count: u8,
             enabled_layer_names: [*]const [*:0]const u8,
 
-            pub fn init(allocator: *Allocator, vkb: dispatch.Base) !Self {
+            pub fn init(allocator: Allocator, vkb: dispatch.Base) !Self {
                 _ = allocator;
                 _ = vkb;
                 return Self{
@@ -50,7 +50,7 @@ fn InfoType() type {
 pub const Info = InfoType();
 
 /// check if validation layer exist
-fn isLayersPresent(allocator: *Allocator, vkb: dispatch.Base, target_layers: []const [*:0]const u8) !bool {
+fn isLayersPresent(allocator: Allocator, vkb: dispatch.Base, target_layers: []const [*:0]const u8) !bool {
     var layer_count: u32 = 0;
     _ = try vkb.enumerateInstanceLayerProperties(&layer_count, null);
 
@@ -81,9 +81,9 @@ pub fn messageCallback(
     p_callback_data: *const vk.DebugUtilsMessengerCallbackDataEXT,
     p_user_data: *c_void,
 ) callconv(vk.vulkan_call_conv) vk.Bool32 {
+    _ = p_user_data;
     _ = message_types;
 
-    const writers = @ptrCast(*IoWriters, @alignCast(@alignOf(*IoWriters), p_user_data));
     const error_mask = comptime blk: {
         break :blk vk.DebugUtilsMessageSeverityFlagsEXT{
             .warning_bit_ext = true,
@@ -91,7 +91,7 @@ pub fn messageCallback(
         };
     };
     const is_severe = error_mask.toInt() & message_severity > 0;
-    const writer = if (is_severe) writers.stderr.* else writers.stdout.*;
+    const writer = if (is_severe) std.io.getStdErr().writer() else std.io.getStdOut().writer();
 
     writer.print("validation layer: {s}\n", .{p_callback_data.p_message}) catch {
         std.debug.print("error from stdout print in message callback", .{});
