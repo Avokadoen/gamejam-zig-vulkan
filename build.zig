@@ -181,6 +181,7 @@ pub fn build(b: *Builder) void {
     const exe = b.addExecutable("zig_vulkan", "src/main.zig");
     exe.setTarget(target);
     exe.setBuildMode(mode);
+    b.default_step.dependOn(&exe.step);
     exe.linkLibC();
     
     // compile and link with glfw statically

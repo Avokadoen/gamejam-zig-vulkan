@@ -70,7 +70,6 @@ pub const Context = struct {
             }
             break :blk common_extensions[0..];
         };
-
         const glfw_extensions_slice = try glfw.getRequiredInstanceExtensions();
         // Due to a zig bug we need arraylist to append instead of preallocate slice
         // in release it fails and lenght turnes out to be 1

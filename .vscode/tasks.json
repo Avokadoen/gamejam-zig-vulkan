@@ -4,7 +4,8 @@
         {
             "label": "debug",
             "type": "shell",
-            "command": "zig build",
+            "command": "zig",
+            "args": ["build"],
             "group": "build",
             "problemMatcher": [
                 "$gcc"
@@ -13,7 +14,11 @@
         {
             "label": "safe",
             "type": "shell",
-            "command": "zig build -Drelease-safe=true",
+            "command": "zig",
+            "args": [
+                "build",
+                "-Drelease-safe=true"
+            ],
             "group": "build",
             "problemMatcher": [
                 "$gcc"
